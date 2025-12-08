@@ -1,32 +1,32 @@
 
-import React, { memo } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
-function ProductCard({ item, onPress }) {
+export default function ProductCard({ product, onAddToCart, onAddToWishlist }) {
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress?.(item)} activeOpacity={0.8}>
-      <Image source={{ uri: item.image }} style={styles.image} resizeMode="contain" />
-      <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.row}>
-          <Icon name="shape-outline" size={16} color="#7F8C8D" />
-          <Text style={styles.category}>  {item.category}</Text>
-        </View>
-        <Text style={styles.price}>₹{(item.price * 83).toFixed(0)}</Text>
+    <View style={styles.card}>
+      <Image source={{ uri: product.image }} style={styles.image} />
+      <Text style={styles.title}>{product.title}</Text>
+      <Text style={styles.price}>₹{product.price}</Text>
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.btn} onPress={onAddToCart}>
+          <Text style={styles.btnText}>Add to Cart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={onAddToWishlist}>
+          <Text style={styles.btnText}>Wishlist</Text>
+        </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
-export default memo(ProductCard);
-
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', backgroundColor: 'white', borderRadius: 12, padding: 12, marginHorizontal: 12, marginVertical: 8, elevation: 2 },
-  image: { width: 84, height: 84 },
-  info: { flex: 1, marginLeft: 12, justifyContent: 'space-between' },
-  title: { fontSize: 16, fontWeight: '600', color: '#2C3E50' },
-  row: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  category: { color: '#7F8C8D', fontSize: 13 },
-  price: { marginTop: 8, fontSize: 16, color: '#2E86DE', fontWeight: '700' },
+  card: { padding: 12, borderRadius: 12, backgroundColor: '#fff', marginBottom: 12, elevation: 2 },
+  image: { width: '100%', height: 160, borderRadius: 8, marginBottom: 8 },
+  title: { fontSize: 16, fontWeight: '600', color: '#000' },
+  price: { marginTop: 4, color: '#0a84ff', fontWeight: '700' }, // default blue
+  actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  btn: { flex: 1, backgroundColor: '#0a84ff', padding: 10, borderRadius: 8, alignItems: 'center' },
+  secondary: { backgroundColor: '#222' },
+  btnText: { color: '#fff', fontWeight: '600' }
 });

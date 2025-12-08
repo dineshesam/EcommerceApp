@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "password": "123456",
+      "role": "user",
+      "name": "User One"
+    },
+    {
+      "id": 2,
+      "email": "admin@example.com",
+      "password": "admin123",
+      "role": "admin",
+      "name": "Admin One"
+    }
+  ],
+  "products": [
+    {
+      "id": 101,
+      "title": "Wireless Headphones",
+      "price": 2999,
+      "image": "https://via.placeholder.com/150",
+      "stock": 12
+    },
+    {
+      "id": 102,
+      "title": "Smart Watch",
+      "price": 4999,
+      "image": "https://via.placeholder.com/150",
+      "stock": 7
+    }
+  ],
+  "wishlist": [
+    {
+      "id": 1,
+      "userId": 1,
+      "productId": 101
+    },
+    {
+      "id": "4310",
+      "userId": 1,
+      "productId": 102
+    }
+  ],
+  "cart": [
+    {
+      "id": 1,
+      "userId": 1,
+      "productId": 102,
+      "qty": 2
+    },
+    {
+      "id": "0e7b",
+      "userId": 1,
+      "productId": 101,
+      "qty": 3
+    }
+  ]
+}
