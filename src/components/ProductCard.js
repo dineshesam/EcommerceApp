@@ -1,117 +1,108 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../redux/slices/cartSlice";
-import { toggleWishlist } from "../redux/slices/wishlistSlice";
+import { addWishlist, removeWishlist } from "../redux/slices/wishlistSlice";
+import { addToWishlistServer, removeFromWishlistServer } from "../api/wishlistApi";
 import makeImageUrl from "../utils/makeImageUrl";
+import { addToCart } from "../redux/slices/cartSlice";
+import { useNavigation } from "@react-navigation/native";
+import { addToCartServer } from "../api/cartApi";
+import { addCart } from "../redux/slices/cartSlice";
+
+
+
 
 export default function ProductCard({ product }) {
 
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const wishlist = useSelector(state => state.wishlist);
 
+  const inWishlist = wishlist.some(item => item.id === product.id);  // backend returns products, not ids
   const imageUri = makeImageUrl(product?.images?.[0]);
-  const isWishlisted = wishlist.includes(product.id);
+
+const handleAddCart = async () => {
+  dispatch(addCart({ productId: product.id, qty:1, product }));  // UI instant
+  await addToCartServer(product.id);                             // DB sync
+};
+
+  // ❤️ WISHLIST ACTION
+  const handleWishlist = async () => {
+    try {
+      if (inWishlist) {
+        dispatch(removeWishlist(product.id));          // remove from UI
+        await removeFromWishlistServer(product.id);    // remove from DB
+      } else {
+        dispatch(addWishlist(product));                // add full object
+        await addToWishlistServer(product.id);         // sync to DB
+      }
+    } catch (err) {
+      console.log("Wishlist Sync Error:", err);
+    }
+  };
 
   return (
-    <View style={styles.card}>
-
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={() => navigation.navigate("ProductDetails", { product })}
+    >
       {/* PRODUCT IMAGE */}
       <Image source={{ uri: imageUri }} style={styles.image} />
 
-      {/* WISHLIST HEART BUTTON */}
-      <TouchableOpacity
-        style={styles.wishBtn}
-        onPress={() => dispatch(toggleWishlist(product.id))}
-      >
+      {/* ❤️ BUTTON */}
+      <TouchableOpacity style={styles.wishBtn} onPress={handleWishlist}>
         <Text style={styles.wishIcon}>
-          {isWishlisted ? "❤️" : "🤍"}
+          {inWishlist ? "❤️" : "🤍"}
         </Text>
       </TouchableOpacity>
 
-      {/* INFO */}
+      {/* PRODUCT INFO */}
       <View style={styles.infoBox}>
-        <Text style={styles.title} numberOfLines={1}>{product.name}</Text>
-        <Text style={styles.price}>₹ {product.price.toLocaleString("en-IN")}</Text>
+        <Text numberOfLines={1} style={styles.title}>{product.name}</Text>
+        <Text style={styles.price}>₹ {product.price}</Text>
 
+        {/* ADD TO CART */}
         <TouchableOpacity
-          onPress={() => dispatch(addToCart(product))}
           style={styles.cartBtn}
+          onPress={handleAddCart}
         >
           <Text style={styles.cartText}>Add to Cart 🛒</Text>
         </TouchableOpacity>
       </View>
-
-    </View>
+    </TouchableOpacity>
   );
 }
 
+/* ==================== STYLES ==================== */
 
-/*==================== STYLES =======================*/
 const styles = StyleSheet.create({
-  card: {
-    width: "47%",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    margin: "1.5%",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-    overflow: "hidden"
+  card:{
+    width:"47%",
+    backgroundColor:"#fff",
+    borderRadius:12,
+    margin:"1.5%",
+    borderWidth:1,
+    borderColor:"#ddd",
+    elevation:4,
+    overflow:"hidden"
   },
-
-  image: {
-    width: "100%",
-    height: 150,
+  image:{ width:"100%", height:150 },
+  wishBtn:{
+    position:"absolute",
+    right:10,
+    top:10,
+    backgroundColor:"#fff",
+    padding:6,
+    borderRadius:25,
+    elevation:5
   },
+  wishIcon:{ fontSize:22 },
 
-  wishBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "#ffffffdd",
-    padding: 6,
-    borderRadius: 25,
-    elevation: 7,
-    shadowColor: "#000"
-  },
+  infoBox:{ padding:10 },
+  title:{ fontSize:15, fontWeight:"600" },
+  price:{ fontSize:16, fontWeight:"700", color:"#0a8a45", marginVertical:5 },
 
-  wishIcon: {
-    fontSize: 22
-  },
-
-  infoBox: {
-    padding: 10,
-  },
-
-  title: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#222",
-  },
-
-  price: {
-    marginVertical: 6,
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#0A8A45",
-  },
-
-  cartBtn: {
-    backgroundColor: "#0A7AFF",
-    paddingVertical: 8,
-    borderRadius: 6,
-    marginTop: 5
-  },
-
-  cartText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-    textAlign: "center"
-  }
+  cartBtn:{ backgroundColor:"#007bff", paddingVertical:7, borderRadius:6, marginTop:6 },
+  cartText:{ color:"#fff", textAlign:"center", fontWeight:"700" }
 });

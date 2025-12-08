@@ -1,28 +1,54 @@
+import React, { useEffect } from "react";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch } from "react-redux";
+import { setWishlist } from "../redux/slices/wishlistSlice";
+import { fetchWishlistProducts } from "../api/wishlistApi";
+import { setCart } from "../redux/slices/cartSlice";
+import { fetchCartFromServer } from "../api/cartApi";
 
-import React, { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { storage } from '../utils/storage';
+export default function Splash({ navigation }){
 
-export default function Splash({ navigation }) {
-  useEffect(() => {
-    const bootstrap = async () => {
-      const user = await storage.getUser();
-      setTimeout(() => {
-        if (user?.role === 'admin') navigation.replace('Admin');
-        else if (user?.role === 'user') navigation.replace('User');
-        else navigation.replace('Auth');
-      }, 600); // small delay for splash feel
-    };
-    bootstrap();
-  }, [navigation]);
+  const dispatch = useDispatch();
 
-  return (
-    <View style={styles.wrap}>
-      <ActivityIndicator size="large" />
+  useEffect(()=>{ init(); },[]);
+
+  const init = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+    const savedUser = await AsyncStorage.getItem("userData");
+
+    setTimeout(async()=>{
+      if(token && savedUser){
+        //🔥 Load real wishlist product objects from backend
+        try{
+  const wishlist = await fetchWishlistProducts();  // backend already returns products
+dispatch(setWishlist(wishlist));
+              // UI now receives real products
+               const cart = await fetchCartFromServer();
+               dispatch(setCart(cart));
+
+
+        }catch(err){
+          console.log("wishlist fetch fail",err);
+        }
+
+        const user = JSON.parse(savedUser);
+        if(user.role === "admin") navigation.replace("AdminTabs");
+        else navigation.replace("UserTabs");
+      }
+      else navigation.replace("Login");
+    },1000);
+  };
+
+  return(
+    <View style={styles.container}>
+      <Text style={styles.logo}>🛍️ E-Shop</Text>
+      <ActivityIndicator size="large" color="#007bff" style={{marginTop:10}}/>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center' }
+  container:{flex:1,justifyContent:"center",alignItems:"center",backgroundColor:"#fff"},
+  logo:{fontSize:32,fontWeight:"900"}
 });
