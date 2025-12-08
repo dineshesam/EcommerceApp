@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchProducts } from '../api/productsApi';
+import { fetchProducts } from '../api/productApi';
 
 export function useProducts() {
   const [products, setProducts] = useState([]);

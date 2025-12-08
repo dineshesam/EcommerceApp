@@ -1,12 +1,12 @@
-
-import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AppNavigator from './src/navigation/AppNavigator';
+import React from "react";
+import { Provider } from "react-redux";
+import { store } from "./src/redux/store";
+import AppNavigator from "./src/navigation";  // <-- index.js auto loads
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <AppNavigator />
-    </SafeAreaView>
+    <Provider store={store}>
+      <AppNavigator />  {/* Works now */}
+    </Provider>
   );
 }

@@ -1,69 +1,68 @@
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { api } from '../api/client';
-import { storage } from '../utils/storage';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../redux/slices/authSlice";
+import { loginApi } from "../api/authApi";
+import { setItem } from "../utils/storage";
 
 export default function Login({ navigation }) {
-  const [email, setEmail] = useState('user@example.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const onLogin = async () => {
+  const handleLogin = async () => {
+    if (!email || !password) return alert("Enter email & password");
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const user = await api.login(email.trim(), password.trim());
-      await storage.saveUser(user);
-      if (user.role === 'admin') navigation.replace('Admin');
-      else navigation.replace('User');
-    } catch (e) {
-      Alert.alert('Login failed', e.message);
-    } finally {
-      setLoading(false);
+      const data = await loginApi(email, password);
+
+      dispatch(setCredentials({
+        user: data.user,
+        token: data.token,
+        isAdmin: data.user.role === "admin"
+      }));
+
+      await setItem("auth", data); // Persist login
+
+      navigation.replace(data.user.role === "admin" ? "AdminTabs" : "UserTabs");
+
+    } catch (err) {
+      alert(err.msg || "Login failed");
     }
+
+    setLoading(false);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome back</Text>
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
+      <Text style={styles.title}>Login</Text>
+
+      <TextInput placeholder="Email"
         style={styles.input}
-        autoCapitalize="none"
-      />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
+        value={email}
+        onChangeText={setEmail} />
+
+      <TextInput placeholder="Password"
         secureTextEntry
         style={styles.input}
-      />
-      <TouchableOpacity style={styles.btn} onPress={onLogin} disabled={loading}>
-        <Text style={styles.btnText}>{loading ? 'Signing in...' : 'Login'}</Text>
+        value={password}
+        onChangeText={setPassword} />
+
+      <TouchableOpacity style={styles.btn} onPress={handleLogin}>
+        {loading ? <ActivityIndicator color="#fff"/> :
+          <Text style={styles.btnText}>Login</Text>
+        }
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 24, color: '#000' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: '#f9f9f9',
-    color: '#000'
-  },
-  btn: {
-    backgroundColor: '#0a84ff', // Default blue
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center'
-  },
-  btnText: { color: '#fff', fontWeight: '700' }
+  container:{ flex:1, justifyContent:"center", padding:20 },
+  title:{ fontSize:28, fontWeight:"bold", textAlign:"center", marginBottom:30 },
+  input:{ borderWidth:1, borderColor:"#aaa", borderRadius:8, padding:12, marginBottom:15 },
+  btn:{ backgroundColor:"black", padding:14, borderRadius:8, alignItems:"center" },
+  btnText:{ color:"#fff", fontSize:18, fontWeight:"600" }
 });

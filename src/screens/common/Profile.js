@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function ManageProducts() {
+export default function Profile() {
   return (
     <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
-      <Text>Manage Products Screen</Text>
+      <Text>Profile</Text>
     </View>
   );
 }

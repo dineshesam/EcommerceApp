@@ -1,68 +1,37 @@
-
-import React, { useEffect, useState } from 'react';
-import { View, FlatList, RefreshControl, Alert } from 'react-native';
-import ProductCard from '../../components/ProductCard';
-import { api } from '../../api/client';
-import { storage } from '../../utils/storage';
+import React, { useEffect } from "react";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProducts } from "../../redux/slices/productSlice";
+import ProductCard from "../../components/ProductCard";
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
-  const [user, setUser] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useDispatch();
+  const { items, loading } = useSelector(state => state.products);
 
-  const load = async () => {
-    try {
-      setRefreshing(true);
-      const [p, u] = await Promise.all([
-        api.getProducts(),
-        storage.getUser()
-      ]);
-      setProducts(p);
-      setUser(u);
-    } catch (e) {
-      Alert.alert('Error', 'Failed to load products or user');
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  // useEffect(() => { dispatch(fetchProducts()); }, []);
+useEffect(() => {
+- dispatch(fetchProducts());
++ dispatch(fetchProducts(1)); // page 1
+}, []);
 
-  useEffect(() => { load(); }, []);
 
-  const addToCart = async (productId) => {
-    if (!user?.id) return Alert.alert('Not logged in', 'Please log in to add items to cart');
-    try {
-      await api.addToCart(user.id, productId, 1);
-      // Optional feedback:
-      // Alert.alert('Cart updated', 'Item added to cart');
-    } catch (e) {
-      Alert.alert('Error', 'Could not add to cart');
-    }
-  };
 
-  const addToWishlist = async (productId) => {
-    if (!user?.id) return Alert.alert('Not logged in', 'Please log in to add items to wishlist');
-    try {
-      await api.addToWishlist(user.id, productId);
-      // Optional feedback:
-      // Alert.alert('Wishlist updated', 'Item added to wishlist');
-    } catch (e) {
-      Alert.alert('Error', 'Could not add to wishlist');
-    }
-  };
+  if (loading)
+    return (
+      <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
 
   return (
-    <View style={{ flex: 1, padding: 12 }}>
+    <View style={{flex:1,padding:10}}>
+      <Text style={{fontSize:22,fontWeight:"bold",marginBottom:10}}>Products</Text>
+
       <FlatList
-        data={products}
-        keyExtractor={item => String(item.id)}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} />}
-        renderItem={({ item }) => (
-          <ProductCard
-            product={item}
-            onAddToCart={() => addToCart(item.id)}
-            onAddToWishlist={() => addToWishlist(item.id)}
-          />
-        )}
+        data={items}
+        keyExtractor={(item) => item._id}
+        numColumns={2}
+        renderItem={({item}) => <ProductCard product={item} />}
       />
     </View>
   );
