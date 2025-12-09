@@ -4,6 +4,7 @@ import axios from "axios";
 export const BASE_URL = "http://192.168.18.140:4000/api";
 // 192.168.18.140
 // 192.168.18.70
+//  192.168.1.2
 
 const api = axios.create({
   baseURL: BASE_URL,

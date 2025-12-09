@@ -1,16 +1,16 @@
 import api from "./axiosConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-/* GET full cart list */
+/** GET USER CART **/
 export const fetchCartFromServer = async () => {
   const token = await AsyncStorage.getItem("userToken");
   const res = await api.get("/cart", {
     headers:{ Authorization:`Bearer ${token}` }
   });
-  return res.data;  // [{productId,qty,product:{...}}]
+  return res.data; // [{ productId, qty, product:{...} }]
 };
 
-/* ADD or INCREASE qty */
+/** ADD TO CART **/
 export const addToCartServer = async (productId) => {
   const token = await AsyncStorage.getItem("userToken");
   return await api.post("/cart", { productId }, {
@@ -18,26 +18,26 @@ export const addToCartServer = async (productId) => {
   });
 };
 
-/* UPDATE quantity */
+/** UPDATE QTY **/
 export const updateCartQtyServer = async (productId, qty) => {
   const token = await AsyncStorage.getItem("userToken");
-  return await api.patch("/cart", { productId, qty },{
+  return await api.patch("/cart", { productId, qty }, {
     headers:{ Authorization:`Bearer ${token}` }
   });
 };
 
-/* REMOVE ITEM completely */
+/** 🔥 DELETE SINGLE PRODUCT **/
 export const removeFromCartServer = async (productId) => {
   const token = await AsyncStorage.getItem("userToken");
-  return await api.delete(`/cart/${productId}`,{
+  return await api.delete(`/cart/${productId}`, {
     headers:{ Authorization:`Bearer ${token}` }
   });
 };
 
-/* CLEAR ENTIRE CART */
+/** CLEAR CART (OPTIONAL) **/
 export const clearCartServer = async () => {
   const token = await AsyncStorage.getItem("userToken");
-  return await api.delete("/cart",{
+  return await api.delete("/cart", {
     headers:{ Authorization:`Bearer ${token}` }
   });
 };

@@ -13,6 +13,7 @@ import {
   removeFromWishlistServer
 } from "../../api/wishlistApi";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { addCart } from "../../redux/slices/cartSlice";
 import makeImageUrl from "../../utils/makeImageUrl";
 import { useNavigation } from "@react-navigation/native";
 
@@ -29,9 +30,11 @@ export default function Wishlist() {
   };
 
   const handleMoveToCart = async (product) => {
-    dispatch(addToCart(product));
+    dispatch(addCart({ productId: product.id, qty:1, product }));
     dispatch(removeWishlist(product.id));
     await removeFromWishlistServer(product.id);
+    await addToCartServer(product.id); 
+
   };
 
   const renderItem = ({ item }) => (

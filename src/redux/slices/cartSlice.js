@@ -1,20 +1,32 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const cartSlice = createSlice({
-  name:"cart",
-  initialState:[],
-  reducers:{
-    setCart:(state,action)=>action.payload,   // FULL cart sync
-    addCart:(state,action)=>[...state,action.payload],
-    updateQty:(state,action)=>{
-      return state.map(item =>
-        item.productId === action.payload.productId
-          ? { ...item, qty: action.payload.qty }
-          : item
-      );
+  name: "cart",
+  initialState: [],
+  reducers: {
+    setCart: (state, action) => action.payload,
+
+    /** 🟢 FIXED — ADD SHOULD MERGE, NOT DUPLICATE */
+    addCart: (state, action) => {
+      const { productId, product } = action.payload;
+      const existing = state.find(i => i.productId === productId);
+
+      if (existing) {
+        existing.qty += 1;             // increase instead of duplicate
+      } else {
+        state.push({ productId, product, qty: 1 });
+      }
     },
-    removeCart:(state,action)=>state.filter(item => item.productId !== action.payload),
-    clearCart:()=>[]
+
+    updateQty: (state, action) => {
+      const item = state.find(i => i.productId === action.payload.productId);
+      if (item) item.qty = action.payload.qty;
+    },
+
+    removeCart: (state, action) => 
+      state.filter(i => i.productId !== action.payload),
+
+    clearCart: () => []
   }
 });
 
