@@ -26,7 +26,7 @@ const handleAddCart = async () => {
   await addToCartServer(product.id);                             // DB sync
 };
 
-  // ❤️ WISHLIST ACTION
+  //  WISHLIST ACTION
   const handleWishlist = async () => {
     try {
       if (inWishlist) {
@@ -50,7 +50,7 @@ const handleAddCart = async () => {
       {/* PRODUCT IMAGE */}
       <Image source={{ uri: imageUri }} style={styles.image} />
 
-      {/* ❤️ BUTTON */}
+      {/*  BUTTON */}
       <TouchableOpacity style={styles.wishBtn} onPress={handleWishlist}>
         <Text style={styles.wishIcon}>
           {inWishlist ? "❤️" : "🤍"}

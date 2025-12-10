@@ -8,6 +8,7 @@ import { setCart } from "../redux/slices/cartSlice";
 import { fetchCartFromServer } from "../api/cartApi";
 
 export default function Splash({ navigation }){
+  
 
   const dispatch = useDispatch();
 

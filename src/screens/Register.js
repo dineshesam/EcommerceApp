@@ -59,7 +59,7 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account 📝</Text>
+      <Text style={styles.title}>Create Account </Text>
       <Text style={styles.subtitle}>Register a new account</Text>
 
       <TextInput

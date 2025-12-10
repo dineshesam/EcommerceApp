@@ -59,7 +59,7 @@ export default function Profile(){
       <Text style={styles.roleTag}>{user.role === "admin" ? "Admin" : "Customer"}</Text>
 
       <TouchableOpacity style={styles.option} 
-  onPress={() => navigation.navigate("Address")}>
+  onPress={() => navigation.navigate("ManageAddress")}>
   <Text style={styles.optionText}>📍 Manage Address</Text>
 </TouchableOpacity>
 
@@ -68,7 +68,7 @@ export default function Profile(){
         <Text style={styles.optionText}>❤️ My Wishlist</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.option} onPress={() => Alert.alert("Coming Soon")}>
+      <TouchableOpacity style={styles.option}  onPress={() => navigation.navigate("Orders") }>
         <Text style={styles.optionText}>📦 My Orders</Text>
       </TouchableOpacity>
 

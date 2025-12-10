@@ -5,16 +5,15 @@ import {
 
 import { useSelector, useDispatch } from "react-redux";
 import { updateQty, removeCart } from "../../redux/slices/cartSlice";
-import {
-  updateCartQtyServer,
-  removeFromCartServer,
-} from "../../api/cartApi";
+import { updateCartQtyServer, removeFromCartServer } from "../../api/cartApi";
 import makeImageUrl from "../../utils/makeImageUrl";
+// import { useNavigation } from "@react-navigation/native";   // 🔥 REQUIRED
 
-export default function Cart() {
+export default function Cart({navigation}) {
   
   const cart = useSelector(state => state.cart);
   const dispatch = useDispatch();
+  // const navigation = useNavigation();      // 🔥 for checkout navigation
 
   const totalAmount = useMemo(
     () => cart.reduce((sum, item) => sum + item.product.price * item.qty, 0),
@@ -28,21 +27,21 @@ export default function Cart() {
   };
 
   const decrease = (item) => {
-    if(item.qty === 1) return remove(item); // auto delete
+    if(item.qty === 1) return remove(item);
     const qty = item.qty - 1;
     dispatch(updateQty({ productId:item.productId, qty }));
     updateCartQtyServer(item.productId, qty);
   };
 
   const remove = (item) => {
-    dispatch(removeCart(item.productId));  // UI instant
-    removeFromCartServer(item.productId);  // 🔥 remove single product
+    dispatch(removeCart(item.productId));
+    removeFromCartServer(item.productId);
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       
-      <Image source={{ uri:makeImageUrl(item.product.images[0]) }} style={styles.img} />
+      <Image source={{ uri: makeImageUrl(item.product.images[0]) }} style={styles.img} />
       
       <View style={{ flex:1 }}>
         <Text style={styles.name}>{item.product.name}</Text>
@@ -77,10 +76,22 @@ export default function Cart() {
         keyExtractor={i=>i.productId.toString()}
       />
 
-      {cart.length>0 && (
-        <Text style={styles.total}>
-          Total: ₹ {totalAmount.toLocaleString('en-IN')}
-        </Text>
+      {cart.length > 0 && (
+        <View style={styles.footer}>
+
+          <Text style={styles.total}>
+            Total: ₹ {totalAmount.toLocaleString('en-IN')}
+          </Text>
+
+          {/* 🔥 Proceed to Checkout */}
+          <TouchableOpacity 
+            style={styles.checkoutBtn} 
+            onPress={() => navigation.navigate("Checkout")}
+          >
+            <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
+          </TouchableOpacity>
+
+        </View>
       )}
     </View>
   );
@@ -100,5 +111,10 @@ const styles = StyleSheet.create({
   qty:{ fontSize:16, fontWeight:"700", marginHorizontal:12 },
   qtySymbol:{ fontSize:18, fontWeight:"900" },
   delete:{ fontSize:24, color:"red", paddingHorizontal:10 },
-  total:{ fontSize:18, fontWeight:"800", marginTop:15, textAlign:"right" }
+
+  footer:{ marginTop:15, borderTopWidth:1, borderColor:"#ddd", paddingTop:12 },
+  total:{ fontSize:18, fontWeight:"800", marginBottom:15, textAlign:"right" },
+
+  checkoutBtn:{ backgroundColor:"#0A84FF", padding:12, borderRadius:10, marginTop:10 },
+  checkoutText:{ color:"#fff", textAlign:"center", fontWeight:"700", fontSize:15 }
 });
