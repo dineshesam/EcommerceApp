@@ -45,7 +45,7 @@ export default function AddAddress() {
     <View style={styles.container}>
 
       <Text style={styles.title}>
-        {editMode ? "✏ Edit Address" : "➕ Add Address"}
+        {editMode ? "Edit Address" : "Add Address"}
       </Text>
 
       {Object.keys(form).map(key => (

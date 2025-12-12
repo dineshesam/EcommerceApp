@@ -58,7 +58,7 @@ export default function ManageAddress() {
           style={[styles.btn, styles.edit]}
           onPress={() => navigation.navigate("AddAddress", { editMode:true, address:item })}
         >
-          <Text style={styles.btnTxt}>✏ Edit</Text>
+          <Text style={styles.btnTxt}> Edit</Text>
         </TouchableOpacity>
 
         {/* DELETE */}

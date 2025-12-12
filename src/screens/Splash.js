@@ -8,7 +8,6 @@ import { setCart } from "../redux/slices/cartSlice";
 import { fetchCartFromServer } from "../api/cartApi";
 
 export default function Splash({ navigation }){
-  
 
   const dispatch = useDispatch();
 
@@ -20,30 +19,29 @@ export default function Splash({ navigation }){
 
     setTimeout(async()=>{
       if(token && savedUser){
-        //🔥 Load real wishlist product objects from backend
         try{
-  const wishlist = await fetchWishlistProducts();  // backend already returns products
-dispatch(setWishlist(wishlist));
-              // UI now receives real products
-               const cart = await fetchCartFromServer();
-               dispatch(setCart(cart));
+          const wishlist = await fetchWishlistProducts();
+          dispatch(setWishlist(wishlist));
 
+          const cart = await fetchCartFromServer();
+          dispatch(setCart(cart));
 
-        }catch(err){
-          console.log("wishlist fetch fail",err);
-        }
+        }catch(err){ console.log("wishlist/cart load fail:", err); }
 
         const user = JSON.parse(savedUser);
         if(user.role === "admin") navigation.replace("AdminTabs");
         else navigation.replace("UserTabs");
-      }
+      } 
       else navigation.replace("Login");
     },1000);
   };
 
   return(
     <View style={styles.container}>
-      <Text style={styles.logo}>🛍️ E-Shop</Text>
+      {/*  Emoji wrapped inside nested Text prevents raw text parsing */}
+      <Text style={styles.logo}>
+        E-Shop
+      </Text>
       <ActivityIndicator size="large" color="#007bff" style={{marginTop:10}}/>
     </View>
   );

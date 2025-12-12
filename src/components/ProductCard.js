@@ -45,8 +45,7 @@ const handleAddCart = async () => {
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.85}
-      onPress={() => navigation.navigate("ProductDetails", { product })}
-    >
+      onPress={() => navigation.navigate("ProductDetails", { product })}>
       {/* PRODUCT IMAGE */}
       <Image source={{ uri: imageUri }} style={styles.image} />
 
@@ -67,7 +66,7 @@ const handleAddCart = async () => {
           style={styles.cartBtn}
           onPress={handleAddCart}
         >
-          <Text style={styles.cartText}>Add to Cart 🛒</Text>
+          <Text style={styles.cartText}>Add to Cart </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

@@ -102,7 +102,7 @@ export default function PlaceOrder({ navigation, route }) {
             {selectedAddress.city}, {selectedAddress.state} -{" "}
             {selectedAddress.pincode}
           </Text>
-          <Text style={styles.addrLine}>📞 {selectedAddress.phoneNo}</Text>
+          <Text style={styles.addrLine}> {selectedAddress.phoneNo}</Text>
 
           <TouchableOpacity
             style={styles.changeBtn}

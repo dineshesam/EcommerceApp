@@ -6,7 +6,7 @@ export default function OrderSuccess({ route, navigation }) {
 
   return (
     <View style={styles.box}>
-      <Text style={styles.big}>🎉 Order Placed!</Text>
+      <Text style={styles.big}> Order Placed!</Text>
       <Text style={styles.small}>Order ID: {order.id}</Text>
 
       <TouchableOpacity onPress={()=>navigation.navigate("Orders")}>

@@ -60,16 +60,16 @@ export default function Profile(){
 
       <TouchableOpacity style={styles.option} 
   onPress={() => navigation.navigate("ManageAddress")}>
-  <Text style={styles.optionText}>📍 Manage Address</Text>
+  <Text style={styles.optionText}> Manage Address</Text>
 </TouchableOpacity>
 
       {/* Menu Buttons */}
       <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Wishlist")}>
-        <Text style={styles.optionText}>❤️ My Wishlist</Text>
+        <Text style={styles.optionText}> My Wishlist</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option}  onPress={() => navigation.navigate("Orders") }>
-        <Text style={styles.optionText}>📦 My Orders</Text>
+        <Text style={styles.optionText}> My Orders</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.logout} onPress={logout}>

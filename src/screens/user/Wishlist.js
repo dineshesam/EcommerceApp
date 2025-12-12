@@ -64,14 +64,14 @@ export default function Wishlist() {
             style={[styles.btn, styles.cartBtn]}
             onPress={() => handleMoveToCart(item)}
           >
-            <Text style={styles.btnText}>Add to Cart 🛒</Text>
+            <Text style={styles.btnText}>Add to Cart </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btn, styles.removeBtn]}
             onPress={() => handleRemove(item)}
           >
-            <Text style={styles.removeTxt}>🗑 Remove</Text>
+            <Text style={styles.removeTxt}> Remove</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -82,7 +82,7 @@ export default function Wishlist() {
     <View style={styles.container}>
       {wishlist.length === 0 ? (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>No items in wishlist 😕</Text>
+          <Text style={styles.emptyText}>No items in wishlist </Text>
         </View>
       ) : (
         <FlatList

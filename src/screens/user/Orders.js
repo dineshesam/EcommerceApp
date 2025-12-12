@@ -47,7 +47,7 @@ export default function Orders() {
       ))}
 
       <Text style={styles.total}>Total: ₹ {item.total.toLocaleString("en-IN")}</Text>
-      <Text style={styles.date}>📅 {new Date(item.createdAt).toDateString()}</Text>
+      <Text style={styles.date}> {new Date(item.createdAt).toDateString()}</Text>
     </View>
   );
 
@@ -59,7 +59,7 @@ export default function Orders() {
       {loading ? <ActivityIndicator size="large" color="#0A84FF" /> : null}
 
       {orders.length === 0 && !loading ? (
-        <Text style={styles.empty}>No orders found 🛍</Text>
+        <Text style={styles.empty}>No orders found </Text>
       ) : (
         <FlatList
           data={orders}
