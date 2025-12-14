@@ -46,7 +46,11 @@ export default function Orders() {
         </View>
       ))}
 
-      <Text style={styles.total}>Total: ₹ {item.total.toLocaleString("en-IN")}</Text>
+     
+<Text style={styles.total}>
+  Total: ₹ {(item.totals?.finalTotal ?? item.total ?? 0).toLocaleString("en-IN")}
+ </Text>
+
       <Text style={styles.date}> {new Date(item.createdAt).toDateString()}</Text>
     </View>
   );

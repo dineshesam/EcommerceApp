@@ -30,6 +30,16 @@ function HomeStack() {
   );
 }
 
+
+function WishlistStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown:false }}>
+      <Stack.Screen name="WishlistMain" component={Wishlist} />
+      <Stack.Screen name="ProductDetails" component={ProductDetails} />
+    </Stack.Navigator>
+  );
+}
+
 /* ----------------- CART STACK ----------------- */
 function CartStack() {
   return (
@@ -51,6 +61,7 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown:false }}>
       <Stack.Screen name="ProfileHome" component={Profile} />
       {/* <Stack.Screen name="Address" component={AddressScreen} /> */}
+      <Tab.Screen name="WishlistMain" component={WishlistStack} />
        <Stack.Screen name="Orders" component={Orders} />  
        <Stack.Screen name="ManageAddress" component={ManageAddress} />  
 <Stack.Screen name="AddAddress" component={AddAddress} /> 
@@ -65,7 +76,7 @@ export default function UserTabs() {
     <Tab.Navigator screenOptions={{ headerShown:false }}>
 
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Wishlist" component={Wishlist} />
+      <Tab.Screen name="WishlistMain" component={WishlistStack} />
 
       {/* 🔥 Remove previous Cart here — use only this! */}
       <Tab.Screen name="Cart" component={CartStack} />

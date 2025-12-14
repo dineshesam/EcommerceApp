@@ -60,18 +60,24 @@ export default function Wishlist() {
         <Text style={styles.price}>₹ {item.price}</Text>
 
         <View style={styles.row}>
-          <TouchableOpacity
+        <TouchableOpacity
             style={[styles.btn, styles.cartBtn]}
-            onPress={() => handleMoveToCart(item)}
+             disabled={item.stock <= 0}
+            onPress={() =>{
+               console.log("Stock:", item.stock);
+               
+               handleMoveToCart(item)}}
+            
           >
-            <Text style={styles.btnText}>Add to Cart </Text>
+            {console.log(item.stock)}
+            <Text style={styles.btnText}>{item.stock <= 0 ? "Out of Stock" : "Add to Cart"}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btn, styles.removeBtn]}
             onPress={() => handleRemove(item)}
           >
-            <Text style={styles.removeTxt}> Remove</Text>
+            <Text style={styles.removeTxt}>🗑 Remove</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -82,7 +88,7 @@ export default function Wishlist() {
     <View style={styles.container}>
       {wishlist.length === 0 ? (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>No items in wishlist </Text>
+          <Text style={styles.emptyText}>No items in wishlist 😕</Text>
         </View>
       ) : (
         <FlatList

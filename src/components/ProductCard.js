@@ -64,9 +64,10 @@ const handleAddCart = async () => {
         {/* ADD TO CART */}
         <TouchableOpacity
           style={styles.cartBtn}
+           disabled={product.stock <= 0}
           onPress={handleAddCart}
         >
-          <Text style={styles.cartText}>Add to Cart </Text>
+          <Text style={styles.cartText}>{product.stock <= 0 ? "Out of Stock" : "Add to Cart"}</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -77,14 +78,16 @@ const handleAddCart = async () => {
 
 const styles = StyleSheet.create({
   card:{
-    width:"47%",
+    width:250,
     backgroundColor:"#fff",
     borderRadius:12,
     margin:"1.5%",
     borderWidth:1,
     borderColor:"#ddd",
     elevation:4,
-    overflow:"hidden"
+    overflow:"hidden",
+    padding:10
+
   },
   image:{ width:"100%", height:150 },
   wishBtn:{

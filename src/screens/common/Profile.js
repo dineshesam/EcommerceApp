@@ -64,7 +64,7 @@ export default function Profile(){
 </TouchableOpacity>
 
       {/* Menu Buttons */}
-      <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Wishlist")}>
+      <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("WishlistMain")}>
         <Text style={styles.optionText}> My Wishlist</Text>
       </TouchableOpacity>
 

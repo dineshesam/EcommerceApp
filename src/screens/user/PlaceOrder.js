@@ -1,71 +1,66 @@
+
 import React, { useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView,
 } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrder } from "../../api/orderApi";
 import { clearCart } from "../../redux/slices/cartSlice";
+import { clearCheckoutTotals } from "../../redux/slices/checkoutSlice";
+import { fetchProducts } from "../../redux/slices/productSlice";
 
 export default function PlaceOrder({ navigation, route }) {
   const cart = useSelector((state) => state.cart);
+  const checkout = useSelector((state) => state.checkout); // ✅ read from Redux
   const dispatch = useDispatch();
 
-  // If coming from SelectAddress screen:
-  const selectedAddress = route?.params?.address || null; // { id, name, city, ... }
-  const selectedAddressId = route?.params?.addressId || null;
+  const selectedAddress = route?.params?.address || null;
+   const selectedAddressId = route?.params?.addressId || null;
 
-  // Fallback manual address state (when user hasn't selected saved address)
   const [manualAddress, setManualAddress] = useState({
-    name: "",
-    phoneNo: "",
-    pincode: "",
-    state: "",
-    city: "",
-    buildingName: "",
-    area: "",
-    type: "home",
-    location: "",
+    name: "", phoneNo: "", pincode: "", state: "", city: "",
+    buildingName: "", area: "", type: "home", location: "",
   });
 
-  const totalAmount = useMemo(
-    () =>
-      cart.reduce(
-        (sum, item) => sum + item.product.price * item.qty,
-        0
-      ),
+  // For safety, compute current subtotal, but prefer Redux values if present
+  const cartSubtotal = useMemo(
+    () => cart.reduce((sum, item) => sum + item.product.price * item.qty, 0),
     [cart]
   );
+
+  const displaySubtotal = checkout.subtotal || cartSubtotal;
+  const displayDiscount = checkout.discount || 0;
+  const displayPayable = checkout.finalTotal || Math.max(0, displaySubtotal - displayDiscount);
+  const couponCode = checkout.couponCode || "";
 
   const handlePlaceOrder = async () => {
     if (!cart.length) {
       console.log("Cart empty, cannot place order");
       return;
     }
-
     try {
-      // If we have an addressId from saved address, use that.
-      // Otherwise send inline address from the form.
-      const payload = selectedAddressId
-        ? {
-            paymentMethod: "cod",
-            addressId: selectedAddressId,
-          }
-        : {
-            paymentMethod: "cod",
-            address: manualAddress,
-          };
+      const basePayload = selectedAddressId
+        ? { paymentMethod: "cod", addressId: selectedAddressId }
+        : { paymentMethod: "cod", address: manualAddress };
+
+      const payload = {
+        ...basePayload,
+        items: cart.map((c) => ({ productId: c.product.id, qty: c.qty })),
+        couponCode: couponCode || undefined,
+        totals: {
+          subtotal: displaySubtotal,
+          discount: displayDiscount,
+          finalTotal: displayPayable,
+        },
+      };
 
       const order = await createOrder(payload);
 
-      // Clear cart locally (Redux)
+      // Clear cart and checkout totals
       dispatch(clearCart());
+      dispatch(clearCheckoutTotals());
+       dispatch(fetchProducts(1)); 
 
-      // Navigate to success page
       navigation.replace("OrderSuccess", { order });
     } catch (err) {
       console.log("Place order error:", err?.response?.data || err.message);
@@ -73,6 +68,7 @@ export default function PlaceOrder({ navigation, route }) {
   };
 
   const goSelectAddress = () => {
+    // No need to forward params—Redux persists totals
     navigation.navigate("SelectAddress", { fromCheckout: true });
   };
 
@@ -80,15 +76,25 @@ export default function PlaceOrder({ navigation, route }) {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
       <Text style={styles.title}>Place Order</Text>
 
-      {/* ---- Order Amount Summary ---- */}
+      {/* ---- Summary ---- */}
       <View style={styles.summaryBox}>
         <Text style={styles.summaryText}>Items: {cart.length}</Text>
-        <Text style={styles.summaryText}>
-          Total: ₹ {totalAmount.toLocaleString("en-IN")}
-        </Text>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={styles.summaryText}>
+            Subtotal: ₹ {displaySubtotal.toLocaleString("en-IN")}
+          </Text>
+          {displayDiscount > 0 && (
+            <Text style={[styles.summaryText, { color: "#ef4444" }]}>
+              Discount: - ₹ {displayDiscount.toLocaleString("en-IN")}
+            </Text>
+          )}
+          <Text style={[styles.summaryText, { color: "#0a8a3a", fontWeight: "800" }]}>
+            Payable: ₹ {displayPayable.toLocaleString("en-IN")}
+          </Text>
+        </View>
       </View>
 
-      {/* ---- Saved Address Section ---- */}
+      {/* ---- Address Section ---- */}
       {selectedAddress ? (
         <View style={styles.addressBox}>
           <Text style={styles.sectionTitle}>Deliver To (Saved Address)</Text>
@@ -99,15 +105,11 @@ export default function PlaceOrder({ navigation, route }) {
             {selectedAddress.buildingName}, {selectedAddress.area}
           </Text>
           <Text style={styles.addrLine}>
-            {selectedAddress.city}, {selectedAddress.state} -{" "}
-            {selectedAddress.pincode}
+            {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}
           </Text>
-          <Text style={styles.addrLine}> {selectedAddress.phoneNo}</Text>
+          <Text style={styles.addrLine}>📞 {selectedAddress.phoneNo}</Text>
 
-          <TouchableOpacity
-            style={styles.changeBtn}
-            onPress={goSelectAddress}
-          >
+          <TouchableOpacity style={styles.changeBtn} onPress={goSelectAddress}>
             <Text style={styles.changeText}>Change Address</Text>
           </TouchableOpacity>
         </View>
@@ -122,14 +124,8 @@ export default function PlaceOrder({ navigation, route }) {
             </View>
 
             {[
-              "name",
-              "phoneNo",
-              "pincode",
-              "state",
-              "city",
-              "buildingName",
-              "area",
-              "location",
+              "name", "phoneNo", "pincode", "state", "city",
+              "buildingName", "area", "location",
             ].map((key) => (
               <TextInput
                 key={key}
@@ -145,7 +141,7 @@ export default function PlaceOrder({ navigation, route }) {
         </>
       )}
 
-      {/* ---- Payment Method info (COD only for now) ---- */}
+      {/* ---- Payment ---- */}
       <View style={styles.paymentBox}>
         <Text style={styles.sectionTitle}>Payment Method</Text>
         <Text style={styles.paymentText}>• Cash on Delivery (COD)</Text>
@@ -158,7 +154,7 @@ export default function PlaceOrder({ navigation, route }) {
         disabled={!cart.length}
       >
         <Text style={styles.orderText}>
-          Place Order • ₹ {totalAmount.toLocaleString("en-IN")}
+          Place Order • ₹ {displayPayable.toLocaleString("en-IN")}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -166,7 +162,6 @@ export default function PlaceOrder({ navigation, route }) {
 }
 
 /* ------------- STYLES ------------- */
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 12 },
   title: { fontSize: 22, fontWeight: "800", marginBottom: 12 },
@@ -239,6 +234,6 @@ const styles = StyleSheet.create({
   orderText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700",
+       fontWeight: "700",
   },
 });
