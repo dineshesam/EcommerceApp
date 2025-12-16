@@ -117,7 +117,7 @@ export default function Cart({ navigation }) {
         </View>
 
         <TouchableOpacity onPress={() => remove(item)}>
-          <Text style={styles.delete}>delete</Text>
+          <Text style={styles.delete}>🗑</Text>
         </TouchableOpacity>
       </View>
     );
@@ -125,7 +125,7 @@ export default function Cart({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}> Cart ({cart.length})</Text>
+      <Text style={styles.header}>🛒 Cart ({cart.length})</Text>
 
       <FlatList
         data={cart}
