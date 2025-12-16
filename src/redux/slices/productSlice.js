@@ -5,6 +5,7 @@ export const fetchProducts = createAsyncThunk(
   "products/fetch",
   async (page = 1) => {
     const data = await getAllProducts(page);
+     console.log("products", data);
     return data; // returns items + total
   }
 );

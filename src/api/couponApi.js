@@ -1,23 +1,49 @@
 
 // api/couponApi.js
-const BASE_URL = 'http://192.168.18.70:4000'; // change if needed
+import api from "./axiosConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+/**
+ * Validate a coupon code against the current cart total.
+ * Returns: { valid: boolean, discountAmount: number, message?: string, ... }
+ */
 export async function validateCoupon(code, cartTotal) {
-  const res = await fetch(`${BASE_URL}/api/coupons/validate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, cartTotal }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Coupon validation failed');
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    const res = await api.post(
+      "/coupons/validate",
+      { code, cartTotal },
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      }
+    );
+    return res.data;
+  } catch (err) {
+    // Normalize error
+    const message =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Coupon validation failed";
+    throw new Error(message);
   }
-  return res.json();
 }
 
+/**
+ * * List available coupons
+ * Returns: Coupon[] (e.g., [{ code, description, discountType, value, expiresAt }])
+ */
 export async function listCoupons() {
-  const res = await fetch(`${BASE_URL}/api/coupons`);
-  if (!res.ok) throw new Error('Failed to load coupons');
-  return res.json();
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    const res = await api.get("/coupons", {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined
+    });
+    return res.data;
+  } catch (err) {
+    const message =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Failed to load coupons";
+    throw new Error(message);
+  }
 }

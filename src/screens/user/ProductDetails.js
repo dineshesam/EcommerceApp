@@ -16,6 +16,10 @@ export default function ProductDetails() {
 
   const dispatch = useDispatch();
   const wishlist = useSelector(state => state.wishlist);
+  const liveStock = useSelector(state => {
+    const p = state.products.items.find(item => item.id === product.id);
+    return p ? p.stock : liveStock;
+  });
 
   const image = makeImageUrl(product?.images?.[0]);
   const isWishlisted = wishlist.some(item => item.id === product.id);
@@ -50,7 +54,7 @@ export default function ProductDetails() {
   };
 
   const handleAddCart = async () => {
-    if (cartLoading || product.stock <= 0) return;
+    if (cartLoading || liveStock <= 0) return;
     setCartLoading(true);
     try {
       // Optimistic UI
@@ -87,15 +91,15 @@ export default function ProductDetails() {
         <Text style={styles.meta}>{product.category}</Text>
 
         <Text style={styles.label}>Stock</Text>
-        <Text style={[styles.meta, product.stock > 0 ? styles.inStock : styles.outStock]}>
-          {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"}
+        <Text style={[styles.meta, liveStock > 0 ? styles.inStock : styles.outStock]}>
+          {liveStock > 0 ? `In Stock (${liveStock})` : "Out of Stock"}
         </Text>
 
         {/* Add to Cart */}
         <TouchableOpacity
-          style={[styles.cartBtn, product.stock <= 0 && { opacity: 0.6 }]}
+          style={[styles.cartBtn, liveStock <= 0 && { opacity: 0.6 }]}
           onPress={handleAddCart}
-          disabled={cartLoading || product.stock <= 0}
+          disabled={cartLoading || liveStock <= 0}
         >
           <Text style={styles.cartText}>{cartLoading ? "Adding..." : "Add to Cart 🛒"}</Text>
         </TouchableOpacity>

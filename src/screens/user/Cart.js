@@ -1,104 +1,155 @@
-import React, { useMemo } from "react";
-import {
-  View, Text, FlatList, Image, TouchableOpacity, StyleSheet
-} from "react-native";
 
+import React, { useMemo, useCallback } from "react";
+import {
+  View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Alert
+} from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { updateQty, removeCart } from "../../redux/slices/cartSlice";
 import { updateCartQtyServer, removeFromCartServer } from "../../api/cartApi";
 import makeImageUrl from "../../utils/makeImageUrl";
-// import { useNavigation } from "@react-navigation/native";   // 🔥 REQUIRED
 
-export default function Cart({navigation}) {
-  
-  const cart = useSelector(state => state.cart);
+export default function Cart({ navigation }) {
   const dispatch = useDispatch();
-  // const navigation = useNavigation();      // 🔥 for checkout navigation
+  const cart = useSelector((state) => state.cart);
+  console.log("cart data", cart);
+  const products = useSelector((state) => state.products.items);
+
+  // Build map with string keys to avoid type mismatch
+  const productsById = useMemo(() => {
+    const map = {};
+    for (const p of products) map[String(p.id)] = p;
+    return map;
+  }, [products]);
 
   const totalAmount = useMemo(
-    () => cart.reduce((sum, item) => sum + item.product.price * item.qty, 0),
+    () => cart.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.qty, 0),
     [cart]
   );
 
-  const increase = (item) => {
-    const qty = item.qty + 1;
-    dispatch(updateQty({ productId:item.productId, qty }));
-    updateCartQtyServer(item.productId, qty);
-  };
+  const increase = useCallback(
+    (item) => {
+      const liveStockRaw = productsById[String(item.productId)]?.stock;
+      const fallback = typeof item.product?.stock === "number" ? item.product.stock : Infinity;
+      const liveStock = typeof liveStockRaw === "number" ? liveStockRaw : fallback;
 
-  const decrease = (item) => {
-    if(item.qty === 1) return remove(item);
-    const qty = item.qty - 1;
-    dispatch(updateQty({ productId:item.productId, qty }));
-    updateCartQtyServer(item.productId, qty);
-  };
+      const nextQty = item.qty + 1;
 
-  const remove = (item) => {
-    dispatch(removeCart(item.productId));
-    removeFromCartServer(item.productId);
-  };
+      console.log("[increase]", { productId: item.productId, qty: item.qty, nextQty, liveStock });
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      
-      <Image source={{ uri: makeImageUrl(item.product.images[0]) }} style={styles.img} />
-      
-      <View style={{ flex:1 }}>
-        <Text style={styles.name}>{item.product.name}</Text>
-        <Text style={styles.price}>₹ {item.product.price}</Text>
+      if (nextQty > liveStock) {
+        Alert.alert("Stock limit", `Only ${liveStock} item(s) available.`);
+        return;
+      }
 
-        <View style={styles.row}>
-          <TouchableOpacity style={styles.qtyBtn} onPress={()=>decrease(item)}>
-            <Text style={styles.qtySymbol}>−</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.qty}>{item.qty}</Text>
-
-          <TouchableOpacity style={styles.qtyBtn} onPress={()=>increase(item)}>
-            <Text style={styles.qtySymbol}>＋</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <TouchableOpacity onPress={()=>remove(item)}>
-        <Text style={styles.delete}>delete</Text>
-      </TouchableOpacity>
-    </View>
+      dispatch(updateQty({ productId: item.productId, qty: nextQty }));
+      updateCartQtyServer(item.productId, nextQty).catch((e) =>
+        console.log("updateCartQtyServer failed:", e?.message)
+      );
+    },
+    [dispatch, productsById]
   );
+
+  const decrease = useCallback(
+    (item) => {
+      if (item.qty === 1) {
+        dispatch(removeCart(item.productId));
+        removeFromCartServer(item.productId).catch((e) =>
+          console.log("removeFromCartServer failed:", e?.message)
+        );
+        return;
+      }
+      const nextQty = item.qty - 1;
+      dispatch(updateQty({ productId: item.productId, qty: nextQty }));
+      updateCartQtyServer(item.productId, nextQty).catch((e) =>
+        console.log("updateCartQtyServer failed:", e?.message)
+      );
+    },
+    [dispatch]
+  );
+
+  const remove = useCallback(
+    (item) => {
+      dispatch(removeCart(item.productId));
+      removeFromCartServer(item.productId).catch((e) =>
+        console.log("removeFromCartServer failed:", e?.message)
+      );
+    },
+    [dispatch]
+  );
+
+  const renderItem = ({ item }) => {
+    const liveStockRaw = productsById[String(item.productId)]?.stock;
+    const fallback = typeof item.product?.stock === "number" ? item.product.stock : 0;
+    const liveStock = typeof liveStockRaw === "number" ? liveStockRaw : fallback;
+
+    const atMax = item.qty >= liveStock || liveStock <= 0;
+
+    return (
+      <View style={styles.card}>
+        <Image
+          source={{ uri: makeImageUrl(item.product?.images?.[0]) }}
+          style={styles.img}
+        />
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name} numberOfLines={2}>{item.product?.name}</Text>
+          <Text style={styles.price}>₹ {item.product?.price}</Text>
+
+          <Text style={{ color: "#666", marginTop: 4, fontSize: 12 }}>
+            {liveStock <= 0 ? "Out of stock" : `In stock: ${liveStock}`}
+          </Text>
+
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => decrease(item)}>
+              <Text style={styles.qtySymbol}>−</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.qty}>{item.qty}</Text>
+
+            <TouchableOpacity
+              style={[styles.qtyBtn, atMax && { opacity: 0.5 }]}
+              onPress={() => increase(item)}
+              disabled={atMax}
+            >
+              <Text style={styles.qtySymbol}>＋</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity onPress={() => remove(item)}>
+          <Text style={styles.delete}>delete</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}> Cart ({cart.length})</Text>
 
-      <FlatList 
+      <FlatList
         data={cart}
         renderItem={renderItem}
-        keyExtractor={i=>i.productId.toString()}
+        keyExtractor={(i) => String(i.productId)}
       />
 
       {cart.length > 0 && (
         <View style={styles.footer}>
-
           <Text style={styles.total}>
-            Total: ₹ {totalAmount.toLocaleString('en-IN')}
+            Total: ₹ {totalAmount.toLocaleString("en-IN")}
           </Text>
-
-          {/* 🔥 Proceed to Checkout */}
-          <TouchableOpacity 
-            style={styles.checkoutBtn} 
+          <TouchableOpacity
+            style={styles.checkoutBtn}
             onPress={() => navigation.navigate("Checkout")}
           >
             <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
           </TouchableOpacity>
-
         </View>
       )}
     </View>
   );
 }
 
-
-/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   container:{ flex:1, backgroundColor:"#fff", padding:10 },
   header:{ fontSize:20, fontWeight:"700", marginBottom:10 },
@@ -111,10 +162,8 @@ const styles = StyleSheet.create({
   qty:{ fontSize:16, fontWeight:"700", marginHorizontal:12 },
   qtySymbol:{ fontSize:18, fontWeight:"900" },
   delete:{ fontSize:24, color:"red", paddingHorizontal:10 },
-
   footer:{ marginTop:15, borderTopWidth:1, borderColor:"#ddd", paddingTop:12 },
   total:{ fontSize:18, fontWeight:"800", marginBottom:15, textAlign:"right" },
-
   checkoutBtn:{ backgroundColor:"#0A84FF", padding:12, borderRadius:10, marginTop:10 },
   checkoutText:{ color:"#fff", textAlign:"center", fontWeight:"700", fontSize:15 }
-});
+  });

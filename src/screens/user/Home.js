@@ -54,6 +54,7 @@ export default function Home() {
 
       return matchSearch && matchCategory;
     });
+    
 
     switch (sortBy) {
       case "price_low":
