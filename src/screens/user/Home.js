@@ -10,8 +10,9 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../redux/slices/productSlice";
 import ProductCard from "../../components/ProductCard";
+import CategoriesRow from "../../components/CategoriesRow";
 
-export default function Home() {
+export default function Home({navigation}) {
   const dispatch = useDispatch();
   const { items, loading } = useSelector(state => state.products);
 
@@ -103,6 +104,11 @@ export default function Home() {
             onChangeText={setSearch}
             style={styles.searchInput}
           />
+          
+
+<CategoriesRow onNavigate={(categoryId) => navigation.navigate('Category', { categoryId })} />
+
+
 
           {/* 🧩 CATEGORY CHIPS */}
           <FlatList
