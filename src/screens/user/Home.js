@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -11,8 +12,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../redux/slices/productSlice";
 import ProductCard from "../../components/ProductCard";
 import CategoriesRow from "../../components/CategoriesRow";
+import useDynamicStyles from "../../hooks/useDynamicStyles";
+import SearchBar from "../../components/SearchBar";
 
-export default function Home({navigation}) {
+export default function Home({ navigation }) {
   const dispatch = useDispatch();
   const { items, loading } = useSelector(state => state.products);
 
@@ -20,9 +23,13 @@ export default function Home({navigation}) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("relevance");
 
+  // Assuming useDynamicStyles returns the active theme's colors, including our e-commerce tokens
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
+
   useEffect(() => {
     dispatch(fetchProducts(1)); // page 1
-  }, []);
+  }, [dispatch]);
 
   /* 🧩 CATEGORIES */
   const categories = useMemo(() => {
@@ -55,7 +62,6 @@ export default function Home({navigation}) {
 
       return matchSearch && matchCategory;
     });
-    
 
     switch (sortBy) {
       case "price_low":
@@ -65,9 +71,7 @@ export default function Home({navigation}) {
         data.sort((a, b) => b.price - a.price);
         break;
       case "newest":
-        data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
+        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
       case "name":
         data.sort((a, b) => a.name.localeCompare(b.name));
@@ -81,8 +85,8 @@ export default function Home({navigation}) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.center, { backgroundColor: colors.primaryBg }]}>
+        <ActivityIndicator size="large" color={colors.brandAccent} />
       </View>
     );
   }
@@ -98,17 +102,26 @@ export default function Home({navigation}) {
       ListHeaderComponent={
         <>
           {/* 🔍 SEARCH */}
-          <TextInput
-            placeholder="Search products..."
-            value={search}
-            onChangeText={setSearch}
-            style={styles.searchInput}
+         
+<SearchBar
+      value={search}
+      onChangeText={setSearch}
+      onClear={() => setSearch('')}
+      placeholder="Search products..."
+      // optional: customize icons per screen
+      // leftIconSource={require('../../assets/icons/search.png')}
+      // rightIconSource={require('../../assets/icons/close.png')}
+      onSubmitEditing={() => {
+        // optionally trigger analytics or refine filters here
+      }}
+       />
+
+
+          <CategoriesRow
+            onNavigate={(categoryId) =>
+              navigation.navigate("Category", { categoryId })
+            }
           />
-          
-
-<CategoriesRow onNavigate={(categoryId) => navigation.navigate('Category', { categoryId })} />
-
-
 
           {/* 🧩 CATEGORY CHIPS */}
           <FlatList
@@ -165,7 +178,7 @@ export default function Home({navigation}) {
                 horizontal
                 keyExtractor={(item) => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
-                 contentContainerStyle={{ marginRight: 40 }}
+                contentContainerStyle={{ marginRight: 40 }}
                 renderItem={({ item }) => (
                   <View style={styles.recommendedItem}>
                     <ProductCard product={item} />
@@ -188,69 +201,85 @@ export default function Home({navigation}) {
 
 /* ---------------- STYLES ---------------- */
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 10,
-    backgroundColor: "#fff"
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  searchInput: {
-    backgroundColor: "#f1f1f1",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    marginBottom: 12
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginVertical: 10
-  },
-recommendedItem: {
-  width: 250,
-  marginRight: 30,
-  paddingLeft: 2
-},
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#f1f1f1",
-    marginRight: 8,
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333"
-  },
-  chipActive: {
-    backgroundColor: "#007bff",
-    color: "#fff"
-  },
-  sortChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginRight: 8,
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333",
-    backgroundColor: "#fff"
-  },
-  sortChipActive: {
-    backgroundColor: "#000",
-    color: "#fff",
-    borderColor: "#000"
-  },
-  empty: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 16,
-    color: "#666"
-  }
-});
+const createStyles = (colors) =>
+  StyleSheet.create({
+    container: {
+      padding: 10,
+      backgroundColor: colors.primaryBg
+    },
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center"
+    },
+
+    /** Search input mapped to input tokens */
+    searchInput: {
+      backgroundColor: colors.inputBg,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 15,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      color: colors.primaryText
+    },
+
+    /** Section titles use primaryText */
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      marginVertical: 10,
+      color: colors.primaryText
+    },
+
+    recommendedItem: {
+      width: 250,
+      marginRight: 30,
+      paddingLeft: 2
+    },
+
+    /** Category chips mapped to tab background & brand accent */
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.tabBackground,
+      marginRight: 8,
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.secondaryText
+    },
+    chipActive: {
+      backgroundColor: colors.brandAccent,
+      color: colors.ctaButtonText
+    },
+
+    /** Sort chips mapped to input chrome; active uses CTA */
+    sortChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      marginRight: 8,
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.primaryText,
+      backgroundColor: colors.inputBg
+    },
+    sortChipActive: {
+      backgroundColor: colors.ctaButtonBg,
+      color: colors.ctaButtonText,
+      borderColor: colors.ctaButtonBg
+    },
+
+    /** Empty state uses secondary text */
+    empty: {
+      textAlign: "center",
+      marginTop: 20,
+      fontSize: 16,
+      color: colors.secondaryText
+    }
+  });

@@ -1,75 +1,96 @@
+
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View, Text, FlatList, StyleSheet, ActivityIndicator, Image
+} from "react-native";
 import makeImageUrl from "../../utils/makeImageUrl";
 import { getMyOrders } from "../../api/orderApi";
-import { Image } from "react-native";
+import useDynamicStyles from "../../hooks/useDynamicStyles";
 
 export default function Orders() {
-
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
+
   const loadOrders = async () => {
-    try{
+    try {
       const res = await getMyOrders();
-      setOrders(res);
-    }catch(e){
+      setOrders(Array.isArray(res) ? res : []);
+    } catch (e) {
       console.log("ORDER FETCH ERROR:", e.response?.data || e);
     }
     setLoading(false);
   };
 
-  useEffect(()=>{ loadOrders(); }, []);
+  useEffect(() => { loadOrders(); }, []);
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.rowTop}>
-        <Text style={styles.orderId}>Order ID: {item.id.slice(0,8)}...</Text>
-        <Text style={[styles.status, 
-             item.status==="pending"?styles.pending:styles.done]}>
-          {item.status.toUpperCase()}
+  const renderItem = ({ item }) => {
+    const status = item.status === "pending" ? "in-transit" : "delivered";
+    const statusStyle = status === "in-transit" ? styles.pending : styles.done;
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.rowTop}>
+          <Text style={styles.orderId}>Order ID: {String(item.id).slice(0, 8)}...</Text>
+          <Text style={[styles.status, statusStyle]}>
+            {status === "in-transit" ? "In Transit" : "Delivered"}
+          </Text>
+        </View>
+
+        {/* Items List */}
+        {Array.isArray(item.items) && item.items.map((p, i) => {
+          const img0 = Array.isArray(p.images) ? p.images[0] : undefined;
+          const uri = makeImageUrl(img0);
+          const hasImage = typeof uri === "string" && uri.length > 0;
+
+          return (
+            <View key={i} style={styles.itemRow}>
+              {hasImage ? (
+                <Image source={{ uri }} style={styles.img} />
+              ) : (
+                <View style={styles.imgPlaceholder}>
+                  <Text style={styles.imgPlaceholderText}>No Image</Text>
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name} numberOfLines={1}>{p.name}</Text>
+                <Text style={styles.qty}>Qty: {p.qty}</Text>
+              </View>
+              <Text style={styles.price}>
+                ₹ {(Number(p.price) * Number(p.qty)).toLocaleString("en-IN")}
+              </Text>
+            </View>
+          );
+        })}
+
+        <Text style={styles.total}>
+          Total: ₹ {(item.totals?.finalTotal ?? item.total ?? 0).toLocaleString("en-IN")}
+        </Text>
+
+        <Text style={styles.date}>
+          {item.createdAt ? new Date(item.createdAt).toDateString() : ""}
         </Text>
       </View>
+    );
+  };
 
-      {/* Items List */}
-      {item.items.map((p,i)=>(
-        <View key={i} style={styles.itemRow}>
-          <Image
-            source={{uri: makeImageUrl(p.images?.[0])}}
-            style={styles.img}
-          />
-          <View style={{flex:1}}>
-            <Text style={styles.name}>{p.name}</Text>
-            <Text style={styles.qty}>Qty: {p.qty}</Text>
-          </View>
-          <Text style={styles.price}>₹ {p.price * p.qty}</Text>
-        </View>
-      ))}
-
-     
-<Text style={styles.total}>
-  Total: ₹ {(item.totals?.finalTotal ?? item.total ?? 0).toLocaleString("en-IN")}
- </Text>
-
-      <Text style={styles.date}> {new Date(item.createdAt).toDateString()}</Text>
-    </View>
-  );
-
-  return(
+  return (
     <View style={styles.container}>
-
       <Text style={styles.title}>My Orders</Text>
 
-      {loading ? <ActivityIndicator size="large" color="#0A84FF" /> : null}
+      {loading ? <ActivityIndicator size="large" color={colors.brandAccent} /> : null}
 
       {orders.length === 0 && !loading ? (
-        <Text style={styles.empty}>No orders found </Text>
+        <Text style={styles.empty}>No orders found</Text>
       ) : (
         <FlatList
           data={orders}
           renderItem={renderItem}
-          keyExtractor={i=>i.id}
-          contentContainerStyle={{paddingBottom:20}}
+          keyExtractor={(i) => String(i.id)}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -77,30 +98,68 @@ export default function Orders() {
 }
 
 /* ---------- STYLES ---------- */
-const styles = StyleSheet.create({
-  container:{ flex:1, backgroundColor:"#fff", padding:12 },
-  title:{ fontSize:22, fontWeight:"700", marginBottom:10 },
+const createStyles = (colors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.primaryBg, padding: 12 },
+    title: { fontSize: 22, fontWeight: "700", marginBottom: 10, color: colors.primaryText },
 
-  card:{ backgroundColor:"#fff", padding:12, borderRadius:10,
-         marginVertical:8, borderWidth:1, borderColor:"#e6e6e6" },
+    card: {
+      backgroundColor: colors.card,
+      padding: 12,
+      borderRadius: 10,
+      marginVertical: 8,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+    },
 
-  rowTop:{ flexDirection:"row", justifyContent:"space-between" },
-  orderId:{ fontSize:13, fontWeight:"600", color:"#333" },
+    rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    orderId: { fontSize: 13, fontWeight: "600", color: colors.primaryText },
 
-  status:{ fontSize:12, paddingVertical:2, paddingHorizontal:6,
-           borderRadius:6, fontWeight:"700", color:"#fff" },
-  pending:{ backgroundColor:"#ff9f1c" },
-  done:{ backgroundColor:"#06d6a0" },
+    status: {
+      fontSize: 12,
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      borderRadius: 6,
+      fontWeight: "700",
+      color: colors.ctaButtonText,
+    },
+    pending: { backgroundColor: colors.warning },
+    done: { backgroundColor: colors.success },
 
-  itemRow:{ flexDirection:"row", alignItems:"center", marginTop:8 },
-  img:{ width:45, height:45, borderRadius:6, marginRight:10 },
+    itemRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.divider,
+    },
+    img: { width: 45, height: 45, borderRadius: 6, marginRight: 10 },
 
-  name:{ fontSize:14, fontWeight:"600" },
-  qty:{ fontSize:12, color:"#666" },
-  price:{ fontSize:14, fontWeight:"800", color:"#008738" },
+    // Fallback when image is missing
+    imgPlaceholder: {
+      width: 45,
+      height: 45,
+      borderRadius: 6,
+      marginRight: 10,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.tabBackground,
+    },
+    imgPlaceholderText: { fontSize: 10, color: colors.secondaryText },
 
-  total:{ fontSize:16, fontWeight:"800", marginTop:10, textAlign:"right" },
-  date:{ fontSize:12, color:"#555", textAlign:"right", marginTop:4 },
+    name: { fontSize: 14, fontWeight: "600", color: colors.primaryText },
+    qty: { fontSize: 12, color: colors.secondaryText },
+    price: { fontSize: 14, fontWeight: "800", color: colors.priceText },
 
-  empty:{ fontSize:17, textAlign:"center", marginTop:40, color:"#666" }
-});
+    total: {
+      fontSize: 16,
+      fontWeight: "800",
+      marginTop: 10,
+      textAlign: "right",
+      color: colors.primaryText,
+    },
+    date: { fontSize: 12, color: colors.secondaryText, textAlign: "right", marginTop: 4 },
+
+    empty: { fontSize: 17, textAlign: "center", marginTop: 40, color: colors.secondaryText },
+  });

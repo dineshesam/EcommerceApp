@@ -11,6 +11,8 @@ import makeImageUrl from "../../utils/makeImageUrl";
 import { useNavigation } from "@react-navigation/native";
 import { addToCartServer } from "../../api/cartApi";
 
+import useDynamicStyles from "../../hooks/useDynamicStyles";
+
 export default function Wishlist() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -18,6 +20,9 @@ export default function Wishlist() {
   const cart = useSelector((state) => state.cart);              // [{ productId, qty, product }, ...]
   const wishlist = useSelector((state) => state.wishlist);       // [{ id, name, ... }, ...]
   const products = useSelector((state) => state.products.items); // [{ id, stock, ... }, ...]
+
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
 
   // Fast lookup of cart product IDs
   const cartIds = useMemo(() => new Set(cart.map((c) => c.productId)), [cart]);
@@ -90,7 +95,7 @@ export default function Wishlist() {
                 style={[
                   styles.btn,
                   styles.cartBtn,
-                  disabled && { opacity: 0.6 }
+                  disabled && styles.btnDisabled
                 ]}
                 disabled={disabled}
                 onPress={() => {
@@ -101,13 +106,22 @@ export default function Wishlist() {
                   }
                   handleMoveToCart(item);
                 }}
+                activeOpacity={0.85}
               >
-                <Text style={styles.btnText}>{buttonLabel}</Text>
+                <Text
+                  style={[
+                    styles.btnText,
+                    disabled && { color: colors.disabledButtonText }
+                  ]}
+                >
+                  {buttonLabel}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.btn, styles.removeBtn]}
                 onPress={() => handleRemove(item)}
+                activeOpacity={0.85}
               >
                 <Text style={styles.removeTxt}>🗑 Remove</Text>
               </TouchableOpacity>
@@ -116,7 +130,7 @@ export default function Wishlist() {
         </TouchableOpacity>
       );
     },
-    [navigation, productsById, cartIds] // include cartIds so label/disabled updates when cart changes
+    [navigation, productsById, cartIds, colors] // include colors for disabled text style
   );
 
   return (
@@ -131,39 +145,58 @@ export default function Wishlist() {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 10 }}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 18, fontWeight: "600", color: "#555" },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    flexDirection: "row",
-    marginBottom: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd"
-  },
-  image: { width: 90, height: 90, borderRadius: 8, marginRight: 10 },
-  info: { flex: 1, justifyContent: "center" },
-  title: { fontSize: 15, fontWeight: "600", color: "#111" },
-  price: { fontSize: 16, color: "#008738", marginVertical: 4 },
-  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
-  btn: {
-    flex: 1,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: "center",
-    marginHorizontal: 2
-  },
-  cartBtn: { backgroundColor: "#007bff" },
-  btnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-  removeBtn: { backgroundColor: "#fff", borderWidth: 1, borderColor: "red" },
-  removeTxt: { color: "red", fontSize: 13, fontWeight: "700" }
-});
+const createStyles = (colors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.primaryBg },
+
+    emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
+    emptyText: { fontSize: 18, fontWeight: "600", color: colors.secondaryText },
+
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 10,
+      flexDirection: "row",
+      marginBottom: 12,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      elevation: 2, // subtle Android elevation
+      overflow: "hidden",
+    },
+
+    image: { width: 90, height: 90, borderRadius: 8, marginRight: 10 },
+
+    info: { flex: 1, justifyContent: "center" },
+
+    title: { fontSize: 15, fontWeight: "600", color: colors.primaryText },
+    price: { fontSize: 16, color: colors.priceText, marginVertical: 4 },
+
+    row: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
+
+    btn: {
+      flex: 1,
+      paddingVertical: 8,
+      borderRadius: 6,
+      alignItems: "center",
+      marginHorizontal: 2,
+    },
+
+    cartBtn: { backgroundColor: colors.ctaButtonBg },
+    btnDisabled: { backgroundColor: colors.disabledButtonBg },
+
+    btnText: { color: colors.ctaButtonText, fontSize: 13, fontWeight: "700" },
+
+    removeBtn: {
+      backgroundColor: colors.inputBg,
+      borderWidth: 1,
+      borderColor: colors.error,
+    },
+    removeTxt: { color: colors.error, fontSize: 13, fontWeight: "700" },
+  });

@@ -8,21 +8,42 @@ import { createOrder } from "../../api/orderApi";
 import { clearCart } from "../../redux/slices/cartSlice";
 import { clearCheckoutTotals } from "../../redux/slices/checkoutSlice";
 import { fetchProducts } from "../../redux/slices/productSlice";
+import useDynamicStyles from "../../hooks/useDynamicStyles";
 
 export default function PlaceOrder({ navigation, route }) {
   const cart = useSelector((state) => state.cart);
-  const checkout = useSelector((state) => state.checkout); // ✅ read from Redux
+  const checkout = useSelector((state) => state.checkout);
   const dispatch = useDispatch();
 
   const selectedAddress = route?.params?.address || null;
-   const selectedAddressId = route?.params?.addressId || null;
+  const selectedAddressId = route?.params?.addressId || null;
 
   const [manualAddress, setManualAddress] = useState({
-    name: "", phoneNo: "", pincode: "", state: "", city: "",
-    buildingName: "", area: "", type: "home", location: "",
+    name: "",
+    phoneNo: "",
+    pincode: "",
+    state: "",
+    city: "",
+    buildingName: "",
+    area: "",
+    type: "home",
+    location: "",
   });
 
-  // For safety, compute current subtotal, but prefer Redux values if present
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
+
+  const placeholders = {
+    name: "Full Name",
+    phoneNo: "Phone Number",
+    pincode: "Pincode",
+    state: "State",
+    city: "City",
+    buildingName: "Building / Flat Name",
+    area: "Area / Street",
+    location: "Landmark (optional)",
+  };
+
   const cartSubtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.product.price * item.qty, 0),
     [cart]
@@ -30,7 +51,8 @@ export default function PlaceOrder({ navigation, route }) {
 
   const displaySubtotal = checkout.subtotal || cartSubtotal;
   const displayDiscount = checkout.discount || 0;
-  const displayPayable = checkout.finalTotal || Math.max(0, displaySubtotal - displayDiscount);
+  const displayPayable =
+    checkout.finalTotal || Math.max(0, displaySubtotal - displayDiscount);
   const couponCode = checkout.couponCode || "";
 
   const handlePlaceOrder = async () => {
@@ -38,6 +60,7 @@ export default function PlaceOrder({ navigation, route }) {
       console.log("Cart empty, cannot place order");
       return;
     }
+
     try {
       const basePayload = selectedAddressId
         ? { paymentMethod: "cod", addressId: selectedAddressId }
@@ -56,10 +79,10 @@ export default function PlaceOrder({ navigation, route }) {
 
       const order = await createOrder(payload);
 
-      // Clear cart and checkout totals
+      // Reset local state after successful order
       dispatch(clearCart());
       dispatch(clearCheckoutTotals());
-       dispatch(fetchProducts(1)); 
+      dispatch(fetchProducts(1));
 
       navigation.replace("OrderSuccess", { order });
     } catch (err) {
@@ -68,7 +91,6 @@ export default function PlaceOrder({ navigation, route }) {
   };
 
   const goSelectAddress = () => {
-    // No need to forward params—Redux persists totals
     navigation.navigate("SelectAddress", { fromCheckout: true });
   };
 
@@ -84,11 +106,11 @@ export default function PlaceOrder({ navigation, route }) {
             Subtotal: ₹ {displaySubtotal.toLocaleString("en-IN")}
           </Text>
           {displayDiscount > 0 && (
-            <Text style={[styles.summaryText, { color: "#ef4444" }]}>
+            <Text style={[styles.summaryText, { color: colors.error }]}>
               Discount: - ₹ {displayDiscount.toLocaleString("en-IN")}
             </Text>
           )}
-          <Text style={[styles.summaryText, { color: "#0a8a3a", fontWeight: "800" }]}>
+          <Text style={[styles.summaryText, { color: colors.priceText, fontWeight: "800" }]}>
             Payable: ₹ {displayPayable.toLocaleString("en-IN")}
           </Text>
         </View>
@@ -109,7 +131,7 @@ export default function PlaceOrder({ navigation, route }) {
           </Text>
           <Text style={styles.addrLine}>📞 {selectedAddress.phoneNo}</Text>
 
-          <TouchableOpacity style={styles.changeBtn} onPress={goSelectAddress}>
+          <TouchableOpacity style={styles.changeBtn} onPress={goSelectAddress} activeOpacity={0.85}>
             <Text style={styles.changeText}>Change Address</Text>
           </TouchableOpacity>
         </View>
@@ -118,23 +140,40 @@ export default function PlaceOrder({ navigation, route }) {
           <View style={styles.addressBox}>
             <View style={styles.addressHeaderRow}>
               <Text style={styles.sectionTitle}>Shipping Address</Text>
-              <TouchableOpacity onPress={goSelectAddress}>
+              <TouchableOpacity onPress={goSelectAddress} activeOpacity={0.85}>
                 <Text style={styles.linkText}>Use Saved Address</Text>
               </TouchableOpacity>
             </View>
 
             {[
-              "name", "phoneNo", "pincode", "state", "city",
-              "buildingName", "area", "location",
-            ].map((key) => (
+              "name",
+              "phoneNo",
+              "pincode",
+              "state",
+              "city",
+              "buildingName",
+              "area",
+              "location",
+            ].map((key, idx, arr) => (
               <TextInput
                 key={key}
-                placeholder={key}
+                placeholder={placeholders[key]}
+                placeholderTextColor={colors.inputPlaceholder}
                 style={styles.input}
-                value={manualAddress[key]}
+                value={String(manualAddress[key] ?? "")}
                 onChangeText={(txt) =>
                   setManualAddress((prev) => ({ ...prev, [key]: txt }))
                 }
+                autoCapitalize={
+                  key === "name" || key === "state" || key === "city" ? "words" : "none"
+                }
+                autoCorrect={false}
+                keyboardType={
+                  key === "phoneNo" ? "phone-pad" :
+                  key === "pincode" ? "number-pad" : "default"
+                }
+                returnKeyType={idx < arr.length - 1 ? "next" : "done"}
+                blurOnSubmit={false}
               />
             ))}
           </View>
@@ -152,6 +191,7 @@ export default function PlaceOrder({ navigation, route }) {
         style={styles.orderBtn}
         onPress={handlePlaceOrder}
         disabled={!cart.length}
+        activeOpacity={0.85}
       >
         <Text style={styles.orderText}>
           Place Order • ₹ {displayPayable.toLocaleString("en-IN")}
@@ -162,78 +202,86 @@ export default function PlaceOrder({ navigation, route }) {
 }
 
 /* ------------- STYLES ------------- */
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 12 },
-  title: { fontSize: 22, fontWeight: "800", marginBottom: 12 },
+const createStyles = (colors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.primaryBg, padding: 12 },
+    title: { fontSize: 22, fontWeight: "800", marginBottom: 12, color: colors.primaryText },
 
-  summaryBox: {
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-    marginBottom: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  summaryText: { fontSize: 15, fontWeight: "600" },
+    summaryBox: {
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: colors.card,
+      marginBottom: 16,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+    },
+    summaryText: { fontSize: 15, fontWeight: "600", color: colors.primaryText },
 
-  sectionTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8 },
+    sectionTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: colors.primaryText },
 
-  addressBox: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 16,
-  },
-  addressHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  addrLine: { fontSize: 14, color: "#333" },
+    addressBox: {
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      marginBottom: 16,
+      backgroundColor: colors.card,
+    },
+    addressHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4,
+    },
+    addrLine: { fontSize: 14, color: colors.secondaryText },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 8,
-    fontSize: 14,
-  },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 8,
+      fontSize: 14,
+      color: colors.primaryText,
+      backgroundColor: colors.inputBg,
+    },
 
-  linkText: { color: "#0A84FF", fontWeight: "700" },
+    linkText: { color: colors.brandAccent, fontWeight: "700" },
 
-  changeBtn: {
-    marginTop: 10,
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#0A84FF",
-  },
-  changeText: { color: "#0A84FF", fontWeight: "600", fontSize: 13 },
+    changeBtn: {
+      marginTop: 10,
+      alignSelf: "flex-start",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.brandAccent,
+      backgroundColor: colors.inputBg,
+    },
+    changeText: { color: colors.brandAccent, fontWeight: "600", fontSize: 13 },
 
-  paymentBox: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 16,
-  },
-  paymentText: { fontSize: 14, color: "#333" },
+    paymentBox: {
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      marginBottom: 16,
+      backgroundColor: colors.card,
+    },
+    paymentText: { fontSize: 14, color: colors.secondaryText },
 
-  orderBtn: {
-    backgroundColor: "#0A84FF",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  orderText: {
-    color: "#fff",
-    fontSize: 16,
-       fontWeight: "700",
-  },
-});
+    orderBtn: {
+      backgroundColor: colors.ctaButtonBg,
+      padding: 14,
+      borderRadius: 10,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    orderText: {
+      color: colors.ctaButtonText,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+  });

@@ -7,12 +7,15 @@ import { useSelector, useDispatch } from "react-redux";
 import { updateQty, removeCart } from "../../redux/slices/cartSlice";
 import { updateCartQtyServer, removeFromCartServer } from "../../api/cartApi";
 import makeImageUrl from "../../utils/makeImageUrl";
+import useDynamicStyles from "../../hooks/useDynamicStyles";
 
 export default function Cart({ navigation }) {
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart);
-  console.log("cart data", cart);
   const products = useSelector((state) => state.products.items);
+
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
 
   // Build map with string keys to avoid type mismatch
   const productsById = useMemo(() => {
@@ -33,8 +36,6 @@ export default function Cart({ navigation }) {
       const liveStock = typeof liveStockRaw === "number" ? liveStockRaw : fallback;
 
       const nextQty = item.qty + 1;
-
-      console.log("[increase]", { productId: item.productId, qty: item.qty, nextQty, liveStock });
 
       if (nextQty > liveStock) {
         Alert.alert("Stock limit", `Only ${liveStock} item(s) available.`);
@@ -95,28 +96,29 @@ export default function Cart({ navigation }) {
           <Text style={styles.name} numberOfLines={2}>{item.product?.name}</Text>
           <Text style={styles.price}>₹ {item.product?.price}</Text>
 
-          <Text style={{ color: "#666", marginTop: 4, fontSize: 12 }}>
+          <Text style={styles.stockText}>
             {liveStock <= 0 ? "Out of stock" : `In stock: ${liveStock}`}
           </Text>
 
           <View style={styles.row}>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => decrease(item)}>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => decrease(item)} activeOpacity={0.85}>
               <Text style={styles.qtySymbol}>−</Text>
             </TouchableOpacity>
 
             <Text style={styles.qty}>{item.qty}</Text>
 
             <TouchableOpacity
-              style={[styles.qtyBtn, atMax && { opacity: 0.5 }]}
+              style={[styles.qtyBtn, atMax && styles.qtyBtnDisabled]}
               onPress={() => increase(item)}
               disabled={atMax}
+              activeOpacity={0.85}
             >
               <Text style={styles.qtySymbol}>＋</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => remove(item)}>
+        <TouchableOpacity onPress={() => remove(item)} activeOpacity={0.85}>
           <Text style={styles.delete}>🗑</Text>
         </TouchableOpacity>
       </View>
@@ -131,6 +133,7 @@ export default function Cart({ navigation }) {
         data={cart}
         renderItem={renderItem}
         keyExtractor={(i) => String(i.productId)}
+        showsVerticalScrollIndicator={false}
       />
 
       {cart.length > 0 && (
@@ -141,6 +144,7 @@ export default function Cart({ navigation }) {
           <TouchableOpacity
             style={styles.checkoutBtn}
             onPress={() => navigation.navigate("Checkout")}
+            activeOpacity={0.85}
           >
             <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
           </TouchableOpacity>
@@ -150,20 +154,67 @@ export default function Cart({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container:{ flex:1, backgroundColor:"#fff", padding:10 },
-  header:{ fontSize:20, fontWeight:"700", marginBottom:10 },
-  card:{ flexDirection:"row", paddingVertical:10, borderBottomWidth:1, borderColor:"#eee" },
-  img:{ width:70, height:70, borderRadius:10, marginRight:10 },
-  name:{ fontSize:15, fontWeight:"600" },
-  price:{ fontSize:15, fontWeight:"800", color:"#0a8a45", marginTop:4 },
-  row:{ flexDirection:"row", alignItems:"center", marginTop:8 },
-  qtyBtn:{ borderWidth:1, borderColor:"#888", borderRadius:6, paddingHorizontal:10, paddingVertical:4 },
-  qty:{ fontSize:16, fontWeight:"700", marginHorizontal:12 },
-  qtySymbol:{ fontSize:18, fontWeight:"900" },
-  delete:{ fontSize:24, color:"red", paddingHorizontal:10 },
-  footer:{ marginTop:15, borderTopWidth:1, borderColor:"#ddd", paddingTop:12 },
-  total:{ fontSize:18, fontWeight:"800", marginBottom:15, textAlign:"right" },
-  checkoutBtn:{ backgroundColor:"#0A84FF", padding:12, borderRadius:10, marginTop:10 },
-  checkoutText:{ color:"#fff", textAlign:"center", fontWeight:"700", fontSize:15 }
+const createStyles = (colors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.primaryBg, padding: 10 },
+    header: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: colors.primaryText },
+
+    card: {
+      flexDirection: "row",
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderColor: colors.divider,
+    },
+
+    img: { width: 70, height: 70, borderRadius: 10, marginRight: 10 },
+
+    name: { fontSize: 15, fontWeight: "600", color: colors.primaryText },
+    price: { fontSize: 15, fontWeight: "800", color: colors.priceText, marginTop: 4 },
+
+    stockText: { color: colors.secondaryText, marginTop: 4, fontSize: 12 },
+
+    row: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+
+    qtyBtn: {
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      backgroundColor: colors.inputBg,
+    },
+    qtyBtnDisabled: {
+      opacity: 0.5,
+    },
+    qty: { fontSize: 16, fontWeight: "700", marginHorizontal: 12, color: colors.primaryText },
+    qtySymbol: { fontSize: 18, fontWeight: "900", color: colors.primaryText },
+
+    delete: { fontSize: 24, color: colors.error, paddingHorizontal: 10 },
+
+    footer: {
+      marginTop: 15,
+      borderTopWidth: 1,
+      borderColor: colors.divider,
+      paddingTop: 12,
+      marginBottom: 100,
+    },
+    total: {
+      fontSize: 18,
+      fontWeight: "800",
+      marginBottom: 15,
+      textAlign: "right",
+      color: colors.primaryText,
+    },
+    checkoutBtn: {
+      backgroundColor: colors.ctaButtonBg,
+      padding: 12,
+      borderRadius: 10,
+      marginTop: 10,
+    },
+    checkoutText: {
+      color: colors.ctaButtonText,
+      textAlign: "center",
+      fontWeight: "700",
+      fontSize: 15,
+    },
   });
