@@ -6,10 +6,12 @@ import {
 import makeImageUrl from "../../utils/makeImageUrl";
 import { getMyOrders } from "../../api/orderApi";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
@@ -35,7 +37,7 @@ export default function Orders() {
         <View style={styles.rowTop}>
           <Text style={styles.orderId}>Order ID: {String(item.id).slice(0, 8)}...</Text>
           <Text style={[styles.status, statusStyle]}>
-            {status === "in-transit" ? "In Transit" : "Delivered"}
+            {status === "in-transit" ? t("common.inTransit") : "Delivered"}
           </Text>
         </View>
 
@@ -66,7 +68,7 @@ export default function Orders() {
         })}
 
         <Text style={styles.total}>
-          Total: ₹ {(item.totals?.finalTotal ?? item.total ?? 0).toLocaleString("en-IN")}
+          {t("cart.total")}: ₹ {(item.totals?.finalTotal ?? item.total ?? 0).toLocaleString("en-IN")}
         </Text>
 
         <Text style={styles.date}>
@@ -78,7 +80,7 @@ export default function Orders() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Orders</Text>
+      <Text style={styles.title}>{t("order.myOrders", "My Odrder")}</Text>
 
       {loading ? <ActivityIndicator size="large" color={colors.brandAccent} /> : null}
 

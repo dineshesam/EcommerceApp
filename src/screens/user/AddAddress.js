@@ -4,6 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-nativ
 import { addAddress, updateAddress } from "../../api/addressApi";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function AddAddress() {
   const navigation = useNavigation();
@@ -26,17 +27,19 @@ export default function AddAddress() {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
+  // Localized placeholders
   const placeholders = {
-    name: "Full Name",
-    phoneNo: "Phone Number",
-    pincode: "Pincode",
-    state: "State",
-    city: "City",
-    buildingName: "Building / Flat Name",
-    area: "Area / Street",
-    type: "Address Type (home/office)",
-    location: "Landmark (optional)"
+    name: t("order.fullName"),
+    phoneNo: t("order.phoneNumber"),
+    pincode: t("order.pincode"),
+    state: t("order.state"),
+    city: t("order.city"),
+    buildingName: t("order.buildingName"),
+    area: t("order.areaStreet"),
+    type: t("order.addressTypeHint", { defaultValue: "Address Type (home/office)" }),
+    location: t("order.landmarkOptional")
   };
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function AddAddress() {
   }, []);
 
   const save = async () => {
-    // minimal validation
+    // minimal validation (kept as-is)
     if (!form.name?.trim()) return;
     if (!form.phoneNo?.trim()) return;
     if (!form.pincode?.trim()) return;
@@ -59,7 +62,7 @@ export default function AddAddress() {
     const payload = {
       ...form,
       phoneNo: String(form.phoneNo ?? ""),
-      pincode: String(form.pincode ?? ""),
+      pincode: String(form.pincode ?? "")
     };
 
     if (editMode) {
@@ -73,11 +76,18 @@ export default function AddAddress() {
 
   const fields = Object.keys(form);
 
+  // Title & Button (localized)
+  const titleText = editMode
+    ? t("order.editAddress", { defaultValue: "Edit Address" })
+    : t("profile.addAddress", { defaultValue: "Add Address" });
+
+  const buttonText = editMode
+    ? t("profile.saveChanges", { defaultValue: "Save Changes" })
+    : t("order.addNewAddress", { defaultValue: "Add Address" });
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {editMode ? "Edit Address" : "Add Address"}
-      </Text>
+      <Text style={styles.title}>{titleText}</Text>
 
       {fields.map((key, idx) => (
         <TextInput
@@ -101,17 +111,15 @@ export default function AddAddress() {
       ))}
 
       <TouchableOpacity style={styles.btn} onPress={save} activeOpacity={0.85}>
-        <Text style={styles.btnTxt}>
-          {editMode ? "Save Changes" : "Add Address"}
-        </Text>
+        <Text style={styles.btnTxt}>{buttonText}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 /* ---------- STYLES ---------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, padding: 14, backgroundColor: colors.primaryBg },
     title: { fontSize: 22, fontWeight: "800", marginBottom: 12, color: colors.primaryText },
 
@@ -135,4 +143,4 @@ const createStyles = (colors) =>
     },
     btnTxt: { color: colors.ctaButtonText, textAlign: "center", fontWeight: "700", fontSize: 16 }
   });
-
+}

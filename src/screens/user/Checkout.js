@@ -15,6 +15,7 @@ import { validateCoupon, listCoupons } from "../../api/couponApi";
 import { useDispatch, useSelector } from "react-redux";
 import { setCheckoutTotals } from "../../redux/slices/checkoutSlice";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function Checkout({ navigation }) {
   const cart = useSelector((state) => state.cart);
@@ -22,6 +23,7 @@ export default function Checkout({ navigation }) {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   // Subtotal (without coupon)
   const subtotal = useMemo(
@@ -70,7 +72,7 @@ export default function Checkout({ navigation }) {
   const handleApplyCoupon = async () => {
     setCouponError("");
     if (!couponCode.trim()) {
-      setCouponError("Please enter a coupon code");
+      setCouponError(t("order.enterCouponCodePrompt"));
       return;
     }
     setCouponApplying(true);
@@ -80,11 +82,11 @@ export default function Checkout({ navigation }) {
         setDiscount(result.discount);
       } else {
         setDiscount(0);
-        setCouponError(result?.message || "Invalid coupon");
+        setCouponError(result?.message || t("order.invalidCoupon"));
       }
     } catch (e) {
       setDiscount(0);
-      setCouponError(e.message || "Coupon validation failed");
+      setCouponError(e.message || t("order.couponValidationFailed"));
     } finally {
       setCouponApplying(false);
     }
@@ -104,7 +106,7 @@ export default function Checkout({ navigation }) {
         const list = await listCoupons();
         setAvailableCoupons(Array.isArray(list) ? list : []);
       } catch (e) {
-        setCouponsError(e.message || "Could not load coupons");
+        setCouponsError(e.message || t("order.couponsLoadFailed"));
       } finally {
         setCouponsLoading(false);
       }
@@ -123,11 +125,11 @@ export default function Checkout({ navigation }) {
         setDiscount(result.discount);
       } else {
         setDiscount(0);
-        setCouponError(result?.message || "Invalid coupon");
+        setCouponError(result?.message || t("order.invalidCoupon"));
       }
     } catch (err) {
       setDiscount(0);
-      setCouponError(err.message || "Coupon validation failed");
+      setCouponError(err.message || t("order.couponValidationFailed"));
     } finally {
       setCouponApplying(false);
     }
@@ -144,7 +146,9 @@ export default function Checkout({ navigation }) {
         <Text style={styles.name} numberOfLines={1}>
           {item.product.name}
         </Text>
-        <Text style={styles.qty}>Qty: {item.qty}</Text>
+        <Text style={styles.qty}>
+          {t("order.items")}: {item.qty}
+        </Text>
       </View>
       <Text style={styles.price}>
         ₹ {(item.product.price * item.qty).toLocaleString("en-IN")}
@@ -154,7 +158,7 @@ export default function Checkout({ navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 20 }}>
-      <Text style={styles.header}>Order Summary</Text>
+      <Text style={styles.header}>{t("order.orderSummary")}</Text>
 
       <FlatList
         data={cart}
@@ -169,9 +173,9 @@ export default function Checkout({ navigation }) {
       {/* ---- Totals box (Subtotal/Discount/Payable) ---- */}
       <View style={styles.totalBox}>
         <View>
-          <Text style={styles.totalText}>Subtotal:</Text>
-          {discount > 0 && <Text style={styles.totalText}>Discount:</Text>}
-          <Text style={styles.totalText}>Payable:</Text>
+          <Text style={styles.totalText}>{t("order.subtotal")}:</Text>
+          {discount > 0 && <Text style={styles.totalText}>{t("order.discount")}:</Text>}
+          <Text style={styles.totalText}>{t("order.payable")}:</Text>
         </View>
         <View>
           <Text style={styles.totalAmount}>
@@ -191,19 +195,30 @@ export default function Checkout({ navigation }) {
       {/* ---- Coupon Section ---- */}
       <View style={styles.couponBox}>
         <View style={styles.couponHeaderRow}>
-          <Text style={styles.sectionTitle}>Apply Coupon</Text>
-          <TouchableOpacity onPress={toggleCoupons} activeOpacity={0.85}>
-            <Text style={styles.linkText}>
-              {showCoupons ? "Hide Coupons" : "Show Coupons"}
+          <Text style={styles.sectionTitle}>{t("order.applyCoupon")}</Text>
+
+          {/* Themed toggle button */}
+          <TouchableOpacity
+            onPress={toggleCoupons}
+            activeOpacity={0.85}
+            style={[
+              styles.couponToggleBtn,
+              showCoupons && styles.couponToggleBtnActive,
+            ]}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showCoupons }}
+          >
+            <Text style={styles.couponToggleBtnText}>
+              {showCoupons ? t("order.hideCoupons") : t("order.showCoupons")}
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.couponRow}>
           <TextInput
-            placeholder="Enter coupon code"
+            placeholder={t("order.enterCouponCode")}
             value={couponCode}
-            onChangeText={(t) => setCouponCode(t.toUpperCase())}
+            onChangeText={(txt) => setCouponCode(txt.toUpperCase())}
             autoCapitalize="characters"
             style={[styles.input, { flex: 1, marginRight: 8 }]}
             placeholderTextColor={colors.inputPlaceholder}
@@ -214,17 +229,25 @@ export default function Checkout({ navigation }) {
               onPress={handleRemoveCoupon}
               activeOpacity={0.85}
             >
-              <Text style={styles.couponBtnText}>Remove</Text>
+              <Text style={styles.couponBtnText}>{t("shop.remove")}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.couponBtn}
+              style={[
+                styles.couponBtn,
+                (couponApplying || !couponCode.trim()) && styles.couponBtnDisabled,
+              ]}
               onPress={handleApplyCoupon}
               disabled={couponApplying || !couponCode.trim()}
               activeOpacity={0.85}
             >
-              <Text style={styles.couponBtnText}>
-                {couponApplying ? "Applying..." : "Apply"}
+              <Text
+                style={[
+                  styles.couponBtnText,
+                  (couponApplying || !couponCode.trim()) && styles.couponBtnDisabledText,
+                ]}
+              >
+                {couponApplying ? t("order.applying") : t("order.apply")}
               </Text>
             </TouchableOpacity>
           )}
@@ -234,15 +257,19 @@ export default function Checkout({ navigation }) {
 
         {showCoupons && (
           <View style={{ marginTop: 8 }}>
-            {couponsLoading && <Text style={{ color: colors.secondaryText }}>Loading coupons...</Text>}
+            {couponsLoading && (
+              <Text style={{ color: colors.secondaryText }}>
+                {t("order.loadingCoupons")}
+              </Text>
+            )}
             {!!couponsError && (
               <Text style={{ color: colors.error }}>{couponsError}</Text>
             )}
-            {!couponsLoading &&
-              !couponsError &&
-              availableCoupons.length === 0 && (
-                <Text style={{ color: colors.secondaryText }}>No available coupons</Text>
-              )}
+            {!couponsLoading && !couponsError && availableCoupons.length === 0 && (
+              <Text style={{ color: colors.secondaryText }}>
+                {t("order.noAvailableCoupons")}
+              </Text>
+            )}
             {!couponsLoading &&
               availableCoupons.map((c) => (
                 <TouchableOpacity
@@ -251,9 +278,13 @@ export default function Checkout({ navigation }) {
                   onPress={() => handlePickCoupon(c)}
                   activeOpacity={0.85}
                 >
-                  <Text style={{ fontWeight: "700", color: colors.primaryText }}>{c.code}</Text>
+                  <Text style={{ fontWeight: "700", color: colors.primaryText }}>
+                    {c.code}
+                  </Text>
                   <Text style={{ color: colors.secondaryText, fontSize: 12 }}>
-                    {c.type === "fixed" ? `Flat ₹${c.value}` : `${c.value}% off`}
+                    {c.type === "fixed"
+                      ? t("order.couponFlat", { value: c.value })
+                      : t("order.couponPercent", { value: c.value })}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -263,20 +294,30 @@ export default function Checkout({ navigation }) {
 
       {/* ---- Proceed button ---- */}
       <TouchableOpacity
-        style={styles.orderBtn}
+        style={[
+          styles.orderBtn,
+          (!cart.length || couponApplying) && styles.orderBtnDisabled,
+        ]}
         onPress={() => navigation.navigate("PlaceOrder")}
         disabled={!cart.length || couponApplying}
         activeOpacity={0.85}
       >
-        <Text style={styles.orderText}>Proceed to Place Order →</Text>
+        <Text
+          style={[
+            styles.orderText,
+            (!cart.length || couponApplying) && styles.orderBtnDisabledText,
+          ]}
+        >
+          {t("order.proceedToPlaceOrder")} →
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
 /* ---------------- STYLES ---------------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBg, padding: 12 },
     header: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: colors.primaryText },
 
@@ -333,21 +374,61 @@ const createStyles = (colors) =>
       fontSize: 15,
     },
 
+    // Primary coupon action button (Apply/Remove)
     couponBtn: {
       backgroundColor: colors.ctaButtonBg,
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.brandAccent,
     },
     couponBtnText: { color: colors.ctaButtonText, fontWeight: "700" },
-    couponError: { color: colors.error, marginTop: 6 },
+    couponBtnDisabled: {
+      backgroundColor: colors.disabledButtonBg,
+      borderColor: colors.border,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    couponBtnDisabledText: {
+      color: colors.disabledButtonText,
+    },
 
+    // List items inside coupon list
     couponItem: {
       paddingVertical: 8,
       borderBottomWidth: 1,
       borderColor: colors.divider,
     },
 
+    // Themed toggle button for "Show/Hide Coupons"
+    couponToggleBtn: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      backgroundColor: colors.ctaButtonBg,
+      borderColor: colors.brandAccent,
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 5,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 2,
+      alignSelf: "flex-start",
+    },
+    couponToggleBtnText: {
+      color: colors.ctaButtonText,
+      fontWeight: "700",
+      fontSize: 14,
+    },
+    couponToggleBtnActive: {
+      backgroundColor: colors.ctaButtonBgPressed,
+      borderColor: colors.brandAccentHover,
+      elevation: 1,
+      shadowOpacity: 0.08,
+    },
+
+    // Proceed button
     orderBtn: {
       marginTop: 20,
       backgroundColor: colors.ctaButtonBg,
@@ -356,4 +437,11 @@ const createStyles = (colors) =>
       alignItems: "center",
     },
     orderText: { color: colors.ctaButtonText, fontWeight: "800", fontSize: 15 },
+    orderBtnDisabled: {
+      backgroundColor: colors.disabledButtonBg,
+    },
+    orderBtnDisabledText: {
+      color: colors.disabledButtonText,
+    },
   });
+}

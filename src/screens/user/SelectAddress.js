@@ -3,21 +3,31 @@ import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 import { getMyAddresses } from "../../api/addressApi";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function SelectAddress({ navigation, route }) {
   const [addresses, setAddresses] = useState([]);
-  const fromCheckout = route.params?.fromCheckout || false;
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const fromCheckout = route?.params?.fromCheckout || false;
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   const load = async () => {
     try {
+      setLoading(true);
+      setError("");
       const data = await getMyAddresses();
-      console.log("📌 My addresses:", data);
       setAddresses(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.log("❌ Address fetch error:", e.response?.data || e.message);
+      console.log("❌ Address fetch error:", e?.response?.data || e?.message);
+      setError(t("order.addressesLoadFailed"));
+      setAddresses([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,44 +41,58 @@ export default function SelectAddress({ navigation, route }) {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.card} onPress={() => choose(item)} activeOpacity={0.85}>
-      <Text style={styles.name}>{item.name} ({item.type})</Text>
-      <Text style={styles.line}>{item.buildingName}, {item.area}</Text>
-      <Text style={styles.line}>{item.city}, {item.state} - {item.pincode}</Text>
+      <Text style={styles.name}>
+        {item.name} ({item.type})
+      </Text>
+      <Text style={styles.line}>
+        {item.buildingName}, {item.area}
+      </Text>
+      <Text style={styles.line}>
+        {item.city}, {item.state} - {item.pincode}
+      </Text>
       {!!item.phoneNo && <Text style={styles.line}>📞 {item.phoneNo}</Text>}
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.head}>My Saved Addresses</Text>
+      <Text style={styles.head}>{t("order.mySavedAddresses")}</Text>
 
       {fromCheckout && (
-        <Text style={styles.hint}>
-          Select an address to use for this order
-        </Text>
+        <Text style={styles.hint}>{t("order.selectAddressForOrder")}</Text>
       )}
 
-      <FlatList
-        data={addresses}
-        keyExtractor={(i) => i.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 12 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <Text style={styles.line}>{t("common.loading")}</Text>
+      ) : error ? (
+        <Text style={[styles.line, { color: colors.error }]}>{error}</Text>
+      ) : addresses.length === 0 ? (
+        <Text style={styles.line}>{t("order.noSavedAddresses")}</Text>
+      ) : (
+        <FlatList
+          data={addresses}
+          keyExtractor={(i) => i.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 12 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.btn}
         onPress={() => navigation.navigate("AddAddress")}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("order.addNewAddress")}
       >
-        <Text style={styles.txt}>➕ Add New Address</Text>
+        <Text style={styles.txt}>➕ {t("order.addNewAddress")}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBg, padding: 10 },
     head: { fontSize: 20, fontWeight: "700", marginBottom: 8, color: colors.primaryText },
     hint: { fontSize: 13, color: colors.brandAccent, marginBottom: 10 },
@@ -79,7 +103,7 @@ const createStyles = (colors) =>
       backgroundColor: colors.card,
       padding: 12,
       borderRadius: 8,
-      marginBottom: 10,
+      marginBottom: 10
     },
     name: { fontSize: 16, fontWeight: "800", color: colors.primaryText },
     line: { fontSize: 13, color: colors.secondaryText, marginTop: 2 },
@@ -90,6 +114,8 @@ const createStyles = (colors) =>
       borderRadius: 8,
       marginTop: 10,
       alignItems: "center",
+      marginBottom: 70
     },
-    txt: { color: colors.ctaButtonText, fontWeight: "700" },
+    txt: { color: colors.ctaButtonText, fontWeight: "700" }
   });
+}

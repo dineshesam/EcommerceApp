@@ -13,11 +13,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import api from "../../api/axiosConfig"; // use your axios instance
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function ChangePassword() {
   const navigation = useNavigation();
 
-  const [changePassword, setChangePassword] = useState(""); // old password
+  const [changePassword, setChangePassword] = useState(""); // current password
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,22 +30,23 @@ export default function ChangePassword() {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   const validate = () => {
     if (!changePassword || !newPassword || !confirmPassword) {
-      Alert.alert("Validation", "All fields are required");
+      Alert.alert(t("profile.validation.title"), t("profile.password.allRequired"));
       return false;
     }
     if (newPassword.length < 8) {
-      Alert.alert("Validation", "Password must be at least 8 characters");
+      Alert.alert(t("profile.validation.title"), t("profile.password.minLength"));
       return false;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert("Validation", "Passwords do not match");
+      Alert.alert(t("profile.validation.title"), t("profile.password.mismatch"));
       return false;
     }
     if (newPassword === changePassword) {
-      Alert.alert("Validation", "New password must be different from current password");
+      Alert.alert(t("profile.validation.title"), t("profile.password.sameAsOld"));
       return false;
     }
     return true;
@@ -58,7 +60,7 @@ export default function ChangePassword() {
 
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Session expired", "Please login again.");
+        Alert.alert(t("profile.sessionExpired.title"), t("profile.sessionExpired.msg"));
         navigation.replace("Login");
         return;
       }
@@ -70,11 +72,11 @@ export default function ChangePassword() {
       );
 
       Alert.alert(
-        "Success",
-        "Password changed successfully. Please login again.",
+        t("profile.success.title"),
+        t("profile.password.changedSuccess"),
         [
           {
-            text: "OK",
+            text: t("common.ok", { defaultValue: "OK" }),
             onPress: async () => {
               await AsyncStorage.removeItem("userToken");
               await AsyncStorage.removeItem("userData");
@@ -85,8 +87,8 @@ export default function ChangePassword() {
       );
     } catch (err) {
       Alert.alert(
-        "Error",
-        err?.response?.data?.message || err?.message || "Failed to change password"
+        t("profile.error.title"),
+        err?.response?.data?.message || err?.message || t("profile.password.changeFailed")
       );
     } finally {
       setLoading(false);
@@ -99,15 +101,16 @@ export default function ChangePassword() {
       contentContainerStyle={{ padding: 20 }}
       keyboardShouldPersistTaps="always"
     >
-      <Text style={styles.header}>Change Password</Text>
+      <Text style={styles.header}>{t("profile.changePassword")}</Text>
 
-      <Text style={styles.label}>Current Password</Text>
+      {/* Current Password */}
+      <Text style={styles.label}>{t("profile.currentPassword")}</Text>
       <View style={styles.passwordRow}>
         <TextInput
           value={changePassword}
           onChangeText={setChangePassword}
           style={[styles.input, { flex: 1 }]}
-          placeholder="Enter current password"
+          placeholder={t("profile.password.enterCurrent")}
           placeholderTextColor={colors.inputPlaceholder}
           secureTextEntry={!showCurrent}
           autoCapitalize="none"
@@ -121,18 +124,21 @@ export default function ChangePassword() {
           style={styles.showBtn}
           onPress={() => setShowCurrent(v => !v)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={showCurrent ? t("profile.hide") : t("profile.show")}
         >
-          <Text style={styles.showText}>{showCurrent ? "Hide" : "Show"}</Text>
+          <Text style={styles.showText}>{showCurrent ? t("profile.hide") : t("profile.show")}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>New Password</Text>
+      {/* New Password */}
+      <Text style={styles.label}>{t("profile.newPassword")}</Text>
       <View style={styles.passwordRow}>
         <TextInput
           value={newPassword}
           onChangeText={setNewPassword}
           style={[styles.input, { flex: 1 }]}
-          placeholder="Enter new password"
+          placeholder={t("profile.password.enterNew")}
           placeholderTextColor={colors.inputPlaceholder}
           secureTextEntry={!showNew}
           autoCapitalize="none"
@@ -146,18 +152,21 @@ export default function ChangePassword() {
           style={styles.showBtn}
           onPress={() => setShowNew(v => !v)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={showNew ? t("profile.hide") : t("profile.show")}
         >
-          <Text style={styles.showText}>{showNew ? "Hide" : "Show"}</Text>
+          <Text style={styles.showText}>{showNew ? t("profile.hide") : t("profile.show")}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>Confirm New Password</Text>
+      {/* Confirm New Password */}
+      <Text style={styles.label}>{t("profile.confirmNewPassword")}</Text>
       <View style={styles.passwordRow}>
         <TextInput
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           style={[styles.input, { flex: 1 }]}
-          placeholder="Re-enter new password"
+          placeholder={t("profile.password.reenterNew")}
           placeholderTextColor={colors.inputPlaceholder}
           secureTextEntry={!showConfirm}
           autoCapitalize="none"
@@ -172,19 +181,24 @@ export default function ChangePassword() {
           style={styles.showBtn}
           onPress={() => setShowConfirm(v => !v)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={showConfirm ? t("profile.hide") : t("profile.show")}
         >
-          <Text style={styles.showText}>{showConfirm ? "Hide" : "Show"}</Text>
+          <Text style={styles.showText}>{showConfirm ? t("profile.hide") : t("profile.show")}</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Save / Update */}
       <TouchableOpacity
         style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
         onPress={handleChangePassword}
         disabled={loading}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("profile.updatePassword")}
       >
         <Text style={styles.saveText}>
-          {loading ? "Updating..." : "Update Password"}
+          {loading ? t("profile.updating") : t("profile.updatePassword")}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -192,8 +206,8 @@ export default function ChangePassword() {
 }
 
 /* ---------- STYLES ---------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.primaryBg
@@ -255,3 +269,4 @@ const createStyles = (colors) =>
       textAlign: "center"
     }
   });
+}

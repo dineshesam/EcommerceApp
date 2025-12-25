@@ -1,4 +1,5 @@
 
+// Profile.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,11 +11,15 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next"; // ⬅️ add this
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import LanguageSwitcher from "../../components/LanguageSwitcher";
 
 export default function Profile() {
   const navigation = useNavigation();
   const [user, setUser] = useState(null);
+
+  const { t, i18n } = useTranslation(); // ⬅️ add this
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
@@ -30,41 +35,49 @@ export default function Profile() {
       const data = await AsyncStorage.getItem("userData");
       if (data) setUser(JSON.parse(data));
     } catch (e) {
-      // silently fail; you could show a toast if needed
       console.log("Failed to load user:", e?.message);
     }
   };
 
   const logout = async () => {
-    Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await AsyncStorage.removeItem("userToken");
-            await AsyncStorage.removeItem("userData");
-            navigation.replace("Login");
-          } catch (e) {
-            console.log("Logout error:", e?.message);
+    Alert.alert(
+      t("profile.confirmLogoutTitle", "Confirm Logout"),
+      t("profile.confirmLogoutMsg", "Are you sure you want to logout?"),
+      [
+        { text: t("common.cancel", "Cancel"), style: "cancel" },
+        {
+          text: t("profile.logout", "Logout"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("userToken");
+              await AsyncStorage.removeItem("userData");
+              navigation.replace("Login");
+            } catch (e) {
+              console.log("Logout error:", e?.message);
+            }
           }
         }
-      }
-    ]);
+      ]
+    );
+  };
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
   };
 
   if (!user) {
     return (
       <View style={[styles.center, { backgroundColor: colors.primaryBg }]}>
-        <Text style={{ color: colors.secondaryText }}>Loading...</Text>
+        <Text style={{ color: colors.secondaryText }}>
+          {t("common.loading", "Loading...")}
+        </Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-
       {/* Avatar */}
       <TouchableOpacity
         style={styles.avatarContainer}
@@ -77,7 +90,7 @@ export default function Profile() {
           }}
           style={styles.avatar}
         />
-        <Text style={styles.editDp}>Edit</Text>
+        <Text style={styles.editDp}>{t("profile.editPhoto", "Edit")}</Text>
       </TouchableOpacity>
 
       {/* User Info */}
@@ -85,37 +98,50 @@ export default function Profile() {
       <Text style={styles.email}>{user.email}</Text>
 
       <Text style={styles.roleTag}>
-        {user.role === "admin" ? "Admin" : "Customer"}
+        {user.role === "admin" ? t("profile.admin", "Admin") : t("profile.customer", "Customer")}
       </Text>
 
       {/* Options */}
       <ProfileOption
-        label="Edit Profile"
+        label={t("profile.editProfile", "Edit Profile")}
         onPress={() => navigation.navigate("EditProfile")}
         colors={colors}
       />
 
       <ProfileOption
-        label="Change Password"
+        label={t("profile.changePassword", "Change Password")}
         onPress={() => navigation.navigate("ChangePassword")}
         colors={colors}
       />
 
       <ProfileOption
-        label="Manage Address"
+        label={t("profile.manageAddress", "Manage Address")}
         onPress={() => navigation.navigate("ManageAddress")}
         colors={colors}
       />
 
       <ProfileOption
-        label="My Orders"
+        label={t("profile.myOrders", "My Orders")}
         onPress={() => navigation.navigate("Orders")}
         colors={colors}
       />
 
+      {/* Logout */}
       <TouchableOpacity style={styles.logout} onPress={logout} activeOpacity={0.85}>
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={styles.logoutText}>{t("profile.logout", "Logout")}</Text>
       </TouchableOpacity>
+
+      {/* Language buttons BELOW Logout */}
+      
+<LanguageSwitcher
+  colors={colors}
+  style={{ marginTop: 16 }}
+  showLabel={true}
+  compact={false}
+  persistSelection={true}
+  languages={["en", "hi", "te"]}
+/>
+
     </View>
   );
 }
@@ -198,8 +224,36 @@ const createStyles = (colors) =>
     },
     logoutText: {
       color: colors.ctaButtonText,
+       fontFamily:'NotoSansTelugu_ExtraCondensed-Black',
       textAlign: "center",
       fontSize: 17,
+      fontWeight: "600"
+    },
+
+    /* ---- Language row styles ---- */
+    langRow: {
+      width: "90%",
+      marginTop: 16
+    },
+    langLabel: {
+      fontSize: 14,
+      marginBottom: 8
+    },
+    langButtons: {
+      flexDirection: "row",
+      gap: 10
+    },
+    langBtn: {
+      flex: 1,
+      paddingVertical: 10,
+      borderWidth: 1,
+      borderRadius: 8,
+      borderColor: colors.inputBorder,
+      alignItems: "center",
+      backgroundColor: colors.inputBg
+    },
+    langBtnText: {
+      fontSize: 14,
       fontWeight: "700"
     }
   });

@@ -1,13 +1,13 @@
 
 import React, { useMemo, useCallback } from "react";
-import {
-  View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Alert
-} from "react-native";
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { updateQty, removeCart } from "../../redux/slices/cartSlice";
 import { updateCartQtyServer, removeFromCartServer } from "../../api/cartApi";
 import makeImageUrl from "../../utils/makeImageUrl";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { toastSuccess, toastInfo } from "../../utils/toast";
+import { useTranslation } from "react-i18next";
 
 export default function Cart({ navigation }) {
   const dispatch = useDispatch();
@@ -16,18 +16,17 @@ export default function Cart({ navigation }) {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
-  // Build map with string keys to avoid type mismatch
   const productsById = useMemo(() => {
     const map = {};
     for (const p of products) map[String(p.id)] = p;
     return map;
   }, [products]);
 
-  const totalAmount = useMemo(
-    () => cart.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.qty, 0),
-    [cart]
-  );
+  const totalAmount = useMemo(() => {
+    return cart.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.qty, 0);
+  }, [cart]);
 
   const increase = useCallback(
     (item) => {
@@ -38,44 +37,51 @@ export default function Cart({ navigation }) {
       const nextQty = item.qty + 1;
 
       if (nextQty > liveStock) {
-        Alert.alert("Stock limit", `Only ${liveStock} item(s) available.`);
+        Alert.alert(
+          t("cart.stockLimitTitle"),
+          t("cart.onlyNAvailable", { count: liveStock })
+        );
         return;
       }
 
       dispatch(updateQty({ productId: item.productId, qty: nextQty }));
-      updateCartQtyServer(item.productId, nextQty).catch((e) =>
-        console.log("updateCartQtyServer failed:", e?.message)
-      );
+      updateCartQtyServer(item.productId, nextQty).catch((e) => {
+        console.log("updateCartQtyServer failed:", e && e.message);
+      });
+      toastSuccess(t("cart.quantityUpdated.title"), item.product?.name + " • " + nextQty);
     },
-    [dispatch, productsById]
+    [dispatch, productsById, t]
   );
 
   const decrease = useCallback(
     (item) => {
       if (item.qty === 1) {
         dispatch(removeCart(item.productId));
-        removeFromCartServer(item.productId).catch((e) =>
-          console.log("removeFromCartServer failed:", e?.message)
-        );
+        removeFromCartServer(item.productId).catch((e) => {
+          console.log("removeFromCartServer failed:", e && e.message);
+        });
+        toastInfo(t("cart.removed.title"), item.product?.name);
         return;
       }
       const nextQty = item.qty - 1;
       dispatch(updateQty({ productId: item.productId, qty: nextQty }));
-      updateCartQtyServer(item.productId, nextQty).catch((e) =>
-        console.log("updateCartQtyServer failed:", e?.message)
-      );
+      updateCartQtyServer(item.productId, nextQty).catch((e) => {
+        console.log("updateCartQtyServer failed:", e && e.message);
+      });
+      toastSuccess(t("cart.quantityUpdated.title"), item.product?.name + " • " + nextQty);
     },
-    [dispatch]
+    [dispatch, t]
   );
 
   const remove = useCallback(
     (item) => {
       dispatch(removeCart(item.productId));
-      removeFromCartServer(item.productId).catch((e) =>
-        console.log("removeFromCartServer failed:", e?.message)
-      );
+      removeFromCartServer(item.productId).catch((e) => {
+        console.log("removeFromCartServer failed:", e && e.message);
+      });
+      toastInfo(t("cart.removed.title"), item.product?.name);
     },
-    [dispatch]
+    [dispatch, t]
   );
 
   const renderItem = ({ item }) => {
@@ -97,7 +103,9 @@ export default function Cart({ navigation }) {
           <Text style={styles.price}>₹ {item.product?.price}</Text>
 
           <Text style={styles.stockText}>
-            {liveStock <= 0 ? "Out of stock" : `In stock: ${liveStock}`}
+            {liveStock <= 0
+              ? t("shop.outOfStock")
+              : t("shop.inStockCount", { count: liveStock })}
           </Text>
 
           <View style={styles.row}>
@@ -127,7 +135,7 @@ export default function Cart({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🛒 Cart ({cart.length})</Text>
+      <Text style={styles.header}>🛒 {t("common.cart")} ({cart.length})</Text>
 
       <FlatList
         data={cart}
@@ -139,14 +147,16 @@ export default function Cart({ navigation }) {
       {cart.length > 0 && (
         <View style={styles.footer}>
           <Text style={styles.total}>
-            Total: ₹ {totalAmount.toLocaleString("en-IN")}
+            {t("cart.total")}: ₹ {totalAmount.toLocaleString("en-IN")}
           </Text>
           <TouchableOpacity
             style={styles.checkoutBtn}
             onPress={() => navigation.navigate("Checkout")}
             activeOpacity={0.85}
           >
-            <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
+            <Text style={styles.checkoutText}>
+              {t("shop.proceedToCheckout")} →
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -154,8 +164,8 @@ export default function Cart({ navigation }) {
   );
 }
 
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBg, padding: 10 },
     header: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: colors.primaryText },
 
@@ -163,7 +173,7 @@ const createStyles = (colors) =>
       flexDirection: "row",
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderColor: colors.divider,
+      borderColor: colors.divider
     },
 
     img: { width: 70, height: 70, borderRadius: 10, marginRight: 10 },
@@ -181,11 +191,9 @@ const createStyles = (colors) =>
       borderRadius: 6,
       paddingHorizontal: 10,
       paddingVertical: 4,
-      backgroundColor: colors.inputBg,
+      backgroundColor: colors.inputBg
     },
-    qtyBtnDisabled: {
-      opacity: 0.5,
-    },
+    qtyBtnDisabled: { opacity: 0.5 },
     qty: { fontSize: 16, fontWeight: "700", marginHorizontal: 12, color: colors.primaryText },
     qtySymbol: { fontSize: 18, fontWeight: "900", color: colors.primaryText },
 
@@ -196,25 +204,26 @@ const createStyles = (colors) =>
       borderTopWidth: 1,
       borderColor: colors.divider,
       paddingTop: 12,
-      marginBottom: 100,
+      marginBottom: 100
     },
     total: {
       fontSize: 18,
       fontWeight: "800",
       marginBottom: 15,
       textAlign: "right",
-      color: colors.primaryText,
+      color: colors.primaryText
     },
     checkoutBtn: {
       backgroundColor: colors.ctaButtonBg,
       padding: 12,
       borderRadius: 10,
-      marginTop: 10,
+      marginTop: 10
     },
     checkoutText: {
       color: colors.ctaButtonText,
       textAlign: "center",
       fontWeight: "700",
-      fontSize: 15,
-    },
+      fontSize: 15
+    }
   });
+}

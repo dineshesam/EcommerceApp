@@ -1,0 +1,192 @@
+
+{
+  "shop": {
+    "searchProducts": "उत्पाद खोजें",
+    "recommendedForYou": "आपके लिए अनुशंसित",
+    "allProducts": "सभी उत्पाद",
+    "inStockCount": "स्टॉक में: {{count}}",
+    "inCart": "कार्ट में",
+    "addToCart": "कार्ट में जोड़ें",
+    "remove": "हटाएं",
+    "inStock": "स्टॉक में",
+    "outOfStock": "स्टॉक समाप्त",
+    "proceedToCheckout": "चेकआउट पर जाएं",
+    "all": "सभी",
+    "filter": "फ़िल्टर",
+    "sortBy": "क्रमबद्ध करें",
+    "noProductsFound": "कोई उत्पाद नहीं मिला",
+    "sort": {
+      "relevance": "प्रासंगिकता",
+      "priceLow": "कीमत ↑",
+      "priceHigh": "कीमत ↓",
+      "newest": "नवीनतम",
+      "nameAZ": "नाम A–Z"
+    }
+  },
+
+  "product": {
+    "description": "विवरण",
+    "category": "श्रेणी"
+  },
+
+  "wishlist": {
+    "empty": "विशलिस्ट में कोई आइटम नहीं 😕",
+    
+"added": {
+    "title": "विषलिस्ट में जोड़ा गया"
+  }
+,
+    "removed": { "title": "विशलिस्ट से हटाया गया" },
+    "removeFailed": { "title": "हटाने में विफल" },
+    "addedToCart": { "title": "कार्ट में जोड़ा गया" },
+    "moveToCartFailed": { "title": "कार्ट में ले जाने में विफल" },
+    "alreadyInCart": { "title": "पहले से ही कार्ट में" }
+  },
+
+  "order": {
+    "orderSummary": "ऑर्डर सारांश",
+    
+"addressTypeHint": "पते का प्रकार (घर/ऑफिस)",
+  "myOrders": "मेरे ऑर्डर",
+
+    "subtotal": "उप-योग",
+    "payable": "देय",
+    "applyCoupon": "कूपन लागू करें",
+    "showCoupons": "कूपन दिखाएं",
+    "hideCoupons": "कूपन छिपाएं",
+    "apply": "लागू करें",
+    "enterCouponCode": "कूपन कोड दर्ज करें",
+    "proceedToPlaceOrder": "ऑर्डर करने के लिए आगे बढ़ें",
+    "placeOrder": "ऑर्डर करें",
+    "items": "आइटम",
+    "discount": "छूट",
+    "shippingAddress": "शिपिंग पता",
+    "useSavedAddress": "सहेजा हुआ पता उपयोग करें",
+    "paymentMethod": "भुगतान विधि",
+    "mySavedAddresses": "मेरे सहेजे गए पते",
+    "deliverTo": "डिलीवरी करें",
+    "changeAddress": "पता बदलें",
+    "orderPlaced": "ऑर्डर किया गया",
+    "viewMyOrders": "मेरे ऑर्डर देखें",
+    "backToHome": "होम पर वापस जाएं",
+    "manageAddressesTitle": "मेरे सहेजे गए पते",
+    "noSavedAddresses": "कोई सहेजा हुआ पता नहीं है।",
+    "addressesLoadFailed": "पते लोड नहीं हो सके",
+    "deleteAddressConfirmTitle": "पता हटाएं?",
+    "deleteAddressConfirmMsg": "क्या आप वाकई इस पते को हटाना चाहते हैं?",
+    "deleteAddressFailed": "पता हटाने में विफल",
+    "addressTypeNA": "एन/ए",
+    "addNewAddress": "नया पता जोड़ें",
+
+    "applying": "लागू किया जा रहा है...",
+    "enterCouponCodePrompt": "कृपया कूपन कोड दर्ज करें",
+    "invalidCoupon": "अमान्य कूपन",
+    "couponValidationFailed": "कूपन सत्यापन विफल",
+    "loadingCoupons": "कूपन लोड हो रहे हैं...",
+    "couponsLoadFailed": "कूपन लोड नहीं हो सके",
+    "noAvailableCoupons": "कोई उपलब्ध कूपन नहीं",
+    "couponFlat": "फ्लैट ₹{{value}}",
+    "couponPercent": "{{value}}% छूट",
+
+    "orderNumber": "ऑर्डर #{{id}}",
+    "orderPlacedSubtitle": "आपको जल्द ही पुष्टि प्राप्त होगी",
+    "orderFailed": { "title": "ऑर्डर विफल" },
+    "addressIncomplete": { "title": "पता अधूरा है" },
+
+    "fullName": "पूरा नाम",
+    "phoneNumber": "फ़ोन नंबर",
+    "pincode": "पिनकोड",
+    "state": "राज्य",
+    "city": "शहर",
+    "buildingName": "भवन / फ्लैट का नाम",
+    "areaStreet": "क्षेत्र / सड़क",
+    "landmarkOptional": "लैंडमार्क (वैकल्पिक)",
+
+    "useSavedAddressShort": "सहेजा हुआ पता",
+    "cod": "कैश ऑन डिलीवरी (COD)"
+  },
+
+  "profile": {
+    "changePhoto": "फोटो बदलें",
+    "nameLabel": "नाम",
+    "enterYourName": "अपना नाम दर्ज करें",
+    "saveChanges": "परिवर्तन सहेजें",
+    "saving": "सहेजा जा रहा है...",
+    "success": { "title": "सफलता", "updated": "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई" },
+    "error": { "title": "त्रुटि" },
+    "updateFailed": "प्रोफ़ाइल अपडेट विफल",
+    "sessionExpired": { "title": "सत्र समाप्त", "msg": "कृपया फिर से लॉगिन करें।" },
+    "validation": {
+      "title": "सत्यापन",
+      "nameEmpty": "नाम खाली नहीं हो सकता",
+      "nameTooShort": "नाम कम से कम 2 अक्षरों का होना चाहिए",
+      "phone10": "फ़ोन नंबर में केवल 10 अंक होने चाहिए",
+      "pincode6": "पिनकोड में केवल 6 अंक होने चाहिए"
+
+    },
+    "unauthorized": "अनधिकृत: कृपया फिर से लॉगिन करें।",
+
+    "editPhoto": "संपादित करें",
+    "delete": "हटाएं",
+    "addAddress": "पता जोड़ें",
+    "currentPassword": "वर्तमान पासवर्ड",
+    "newPassword": "नया पासवर्ड",
+    "confirmNewPassword": "नया पासवर्ड पुष्टि करें",
+    "show": "दिखाएं",
+    "hide": "छिपाएं",
+    "updatePassword": "पासवर्ड अपडेट करें",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "changePassword": "पासवर्ड बदलें",
+    "manageAddress": "पता प्रबंधित करें",
+    "myOrders": "मेरे ऑर्डर",
+    "logout": "लॉगआउट",
+    "confirmLogoutTitle": "लॉगआउट की पुष्टि करें",
+    "confirmLogoutMsg": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
+    "admin": "प्रशासक",
+    "customer": "ग्राहक",
+    "updating": "अपडेट किया जा रहा है...",
+
+    "password": {
+      "enterCurrent": "वर्तमान पासवर्ड दर्ज करें",
+      "enterNew": "नया पासवर्ड दर्ज करें",
+      "reenterNew": "नया पासवर्ड फिर से दर्ज करें",
+      "changedSuccess": "पासवर्ड सफलतापूर्वक बदल गया। कृपया फिर से लॉगिन करें।",
+      "changeFailed": "पासवर्ड बदलने में विफल",
+      "allRequired": "सभी फ़ील्ड आवश्यक हैं",
+      "minLength": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए",
+      "mismatch": "पासवर्ड मेल नहीं खाते",
+      "sameAsOld": "नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए"
+    }
+  },
+
+  "settings": { "language": "भाषा" },
+
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "ok": "ठीक है",
+    "cancel": "रद्द करें",
+    "clear": "साफ़ करें",
+    "home": "होम",
+    "wishlist": "विशलिस्ट",
+    "profile": "प्रोफ़ाइल",
+    "cart": "कार्ट",
+    "clearSearch": "खोज साफ़ करें",
+    "clearSearchHint": "वर्तमान खोज पाठ साफ़ करता है",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "error": { "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।" },
+    "inTransit": "रास्ते में"
+  },
+
+  "cart": {
+    "stockLimitTitle": "स्टॉक सीमा",
+    "onlyNAvailable": "केवल {{count}} आइटम उपलब्ध हैं।",
+    "quantityUpdated": { "title": "मात्रा अपडेट की गई" },
+    "removed": { "title": "कार्ट से हटाया गया" },
+    "total": "कुल",
+    "empty": {
+      "title": "कार्ट खाली है",
+      "subtitle": "ऑर्डर करने से पहले आइटम जोड़ें"
+    }
+  }
+}

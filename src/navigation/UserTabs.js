@@ -21,12 +21,14 @@ import ManageAddress from "../screens/user/ManageAddress";
 import CategoryScreen from "../screens/user/CategoryScreen";
 import EditProfile from "../screens/common/EditProfile";
 import ChangePassword from "../screens/common/ChangePassord";
+import { useTranslation } from "react-i18next";
 
 /** Theme hook that gives { colors } */
 import useDynamicStyles from "../hooks/useDynamicStyles";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+  
 
 /* ----------------- HOME STACK ----------------- */
 function HomeStack() {
@@ -81,6 +83,7 @@ function ProfileStack() {
 /* ----------------- TABS ----------------- */
 export default function UserTabs() {
   const { colors } = useDynamicStyles();
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
@@ -94,10 +97,10 @@ export default function UserTabs() {
         };
 
         const tabLabels = {
-          Home: "Home",
-          Wishlist: "Wishlist",
-          Cart: "Cart",
-          Profile: "Profile",
+          Home:t("common.home"),
+          Wishlist: t("common.wishlist"),
+          Cart: t("common.cart"),
+          Profile: t("common.profile"),
         };
 
         const iconSource = icons[route.name];

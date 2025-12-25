@@ -145,7 +145,7 @@ export default function CategoryScreen({ route }) {
       <FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <ProductCard product={item} />}
+        renderItem={({ item }) =><View style={{ margin:10, width:300,height:280}}> <ProductCard product={item} /></View>}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={<Text style={styles.empty}>No products found</Text>}
@@ -158,7 +158,7 @@ export default function CategoryScreen({ route }) {
 const createStyles = (colors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.primaryBg },
-    container: { paddingHorizontal: 10, paddingBottom: 16 },
+    container: { paddingHorizontal: 10, paddingBottom: 56 },
 
     title: {
       fontSize: 22,

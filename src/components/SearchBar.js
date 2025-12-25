@@ -8,24 +8,28 @@ import {
   Image,
   StyleSheet,
   Platform,
+  I18nManager,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import useDynamicStyles from '../hooks/useDynamicStyles';
 
 export default function SearchBar({
   value,
   onChangeText,
   onClear,
-  placeholder = 'Search products...',
-  // Optional overrides
+  placeholder, // optional override, falls back to i18n
   leftIconSource = require('../assets/icons/search.png'),
   rightIconSource = require('../assets/icons/close.png'),
   showRightIcon = true,
   containerStyle,
   inputStyle,
-  onSubmitEditing,
+  onSubmitEditing = () => {}, // default no-op
 }) {
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
+
+  const computedPlaceholder = placeholder ?? t('shop.searchProducts');
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -37,10 +41,14 @@ export default function SearchBar({
 
       {/* Input */}
       <TextInput
-        style={[styles.input, { color: colors.primaryText }, inputStyle]}
+        style={[
+          styles.input,
+          { color: colors.primaryText, textAlign: I18nManager.isRTL ? 'right' : 'left' },
+          inputStyle,
+        ]}
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={computedPlaceholder}
         placeholderTextColor={colors.inputPlaceholder}
         returnKeyType="search"
         onSubmitEditing={onSubmitEditing}
@@ -51,7 +59,8 @@ export default function SearchBar({
         <TouchableOpacity
           onPress={onClear}
           accessibilityRole="button"
-          accessibilityLabel="Clear search"
+          accessibilityLabel={t('common.clearSearch')}
+          accessibilityHint={t('common.clearSearchHint')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={styles.rightIconWrapper}
         >
@@ -65,8 +74,8 @@ export default function SearchBar({
   );
 }
 
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -104,4 +113,5 @@ const createStyles = (colors) =>
       paddingHorizontal: 10,
       fontSize: 15,
     },
-});
+  });
+}

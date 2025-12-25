@@ -1,0 +1,222 @@
+
+{
+  "shop": {
+    "searchProducts": "Search products",
+    "recommendedForYou": "Recommended for you",
+    "allProducts": "All Products",
+    "inStockCount": "In stock: {{count}}",
+    "inCart": "in Cart",
+    "addToCart": "Add to Cart",
+    "remove": "Remove",
+    "inStock": "in Stock",
+    "outOfStock": "Out of Stock",
+    "proceedToCheckout": "Proceed to Checkout",
+    "all": "All",
+    "filter": "Filter",
+    "sortBy": "Sort By",
+    "noProductsFound": "No products found",
+    "sort": {
+      "relevance": "Relevance",
+      "priceLow": "Price ↑",
+      "priceHigh": "Price ↓",
+      "newest": "Newest",
+      "nameAZ": "Name A–Z"
+    }
+  },
+  
+ "product": {
+    "description": "Description",
+    "category": "Category"
+  },
+
+
+  "wishlist": {
+    "empty": "No items in wishlist 😕",
+    "added": { "title": "Added to wishlist" } ,
+    "removed": {
+      "title": "Removed from wishlist"
+    },
+    "removeFailed": {
+      "title": "Remove failed"
+    },
+    "addedToCart": {
+      "title": "Added to cart"
+    },
+    "moveToCartFailed": {
+      "title": "Move to cart failed"
+    },
+    "alreadyInCart": {
+      "title": "Already in cart"
+    }
+  },
+
+  "order": {
+    "orderSummary": "Order Summary",
+    "subtotal": "subtotal",
+    "myOrders": "My Orders",
+    "payable": "payable",
+    "applyCoupon": "Apply Coupon",
+    "showCoupons": "show coupons",
+    "hideCoupons": "Hide Coupons",
+    "apply": "Apply",
+    "enterCouponCode": "Enter Coupon Code",
+    "proceedToPlaceOrder": "Proceed to Place Order",
+    "placeOrder": "Place Order",
+    "items": "items",
+    "discount": "Discount",
+    "shippingAddress": "Shipping Address",
+    "useSavedAddress": "Use Saved Address",
+    "paymentMethod": "Payment Method",
+    "mySavedAddresses": "My Saved Addresses",
+    "deliverTo": "Deliver To",
+    "changeAddress": "Change Address",
+    "orderPlaced": "Order Placed",
+    "viewMyOrders": "View My Orders",
+    "backToHome": "Back to Home",
+    "manageAddressesTitle": "My Saved Addresses",
+    
+ "noSavedAddresses": "No saved address yet.",
+    "addressesLoadFailed": "Could not load your addresses",
+    "deleteAddressConfirmTitle": "Delete Address?",
+    "deleteAddressConfirmMsg": "Are you sure you want to remove this address?",
+    "deleteAddressFailed": "Failed to delete address",
+    "addressTypeNA": "N/A",
+    "addNewAddress": "Add New Address",
+
+
+    
+
+    "applying": "Applying...",
+    "enterCouponCodePrompt": "Please enter a coupon code",
+    "invalidCoupon": "Invalid coupon",
+    "couponValidationFailed": "Coupon validation failed",
+    "loadingCoupons": "Loading coupons...",
+    "couponsLoadFailed": "Could not load coupons",
+    "noAvailableCoupons": "No available coupons",
+    "couponFlat": "Flat ₹{{value}}",
+    "couponPercent": "{{value}}% off",
+     "addressTypeHint": "Address Type (home/office)",
+
+    "orderNumber": "Order #{{id}}",
+    "orderPlacedSubtitle": "You’ll receive a confirmation shortly",
+    "orderFailed": {
+      "title": "Order failed"
+    },
+    "addressIncomplete": {
+      "title": "Address incomplete"
+    },
+
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "pincode": "Pincode",
+    "state": "State",
+    "city": "City",
+    "buildingName": "Building / Flat Name",
+    "areaStreet": "Area / Street",
+    "landmarkOptional": "Landmark (optional)",
+
+    "useSavedAddressShort": "Saved Address",
+    "cod": "Cash on Delivery (COD)"
+  },
+
+  "profile": {
+    
+   "changePhoto": "Change Photo",
+    "nameLabel": "Name",
+    "enterYourName": "Enter your name",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "success": { "title": "Success", "updated": "Profile updated successfully" },
+    "error": { "title": "Error" },
+    "updateFailed": "Failed to update profile",
+    
+"sessionExpired": { "title": "Session expired", "msg": "Please login again." },
+    "validation": {
+      "title": "Validation",
+      "nameEmpty": "Name cannot be empty",
+      "nameTooShort": "Name must be at least 2 characters",
+      "phone10":"phone number should contain only 10 digits",
+      "pincode6":"pincode should contain only 6 Digits"
+    },
+    "unauthorized": "Unauthorized: Please login again."
+  ,
+
+
+    "editPhoto": "Edit",
+    "delete": "Delete",
+    "addAddress": "Add Address",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "show": "show",
+    "updatePassword": "Update Password",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "manageAddress": "Manage Address",
+    "logout": "Logout",
+    "confirmLogoutTitle": "Confirm Logout",
+    "confirmLogoutMsg": "Are you sure you want to logout?",
+    "admin": "Admin",
+    "customer": "Customer",
+    
+  "updating": "Updating...",
+    "hide": "Hide",
+    
+"password": {
+      "enterCurrent": "Enter current password",
+      "enterNew": "Enter new password",
+      "reenterNew": "Re-enter new password",
+      "changedSuccess": "Password changed successfully. Please login again.",
+      "changeFailed": "Failed to change password",
+      "allRequired": "All fields are required",
+      "minLength": "Password must be at least 8 characters",
+      "mismatch": "Passwords do not match",
+      "sameAsOld": "New password must be different from current password"
+    }
+ 
+
+
+
+  },
+
+  "settings": {
+    "language": "Language"
+  },
+
+  "common": {
+    "loading": "Loading...",
+     "ok": "OK",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "home": "Home",
+    "wishlist": "Wishlist",
+    "profile": "Profile",
+    "cart": "Cart",
+    "clearSearch": "Clear search",
+    "clearSearchHint": "Clears the current search text",
+    "inTransit": "in Transit",
+    
+  "edit": "Edit",
+    "delete": "Delete",
+
+    "error": {
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+
+  "cart": {
+    "stockLimitTitle": "Stock limit",
+    "onlyNAvailable": "Only {{count}} item(s) available.",
+    "quantityUpdated": {
+      "title": "Quantity updated"
+    },
+    "removed": {
+      "title": "Removed from cart"
+    },
+    "total": "Total",
+    "empty": {
+      "title": "Cart is empty",
+      "subtitle": "Add items before placing an order"
+    }
+  }
+}

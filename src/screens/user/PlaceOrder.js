@@ -9,11 +9,19 @@ import { clearCart } from "../../redux/slices/cartSlice";
 import { clearCheckoutTotals } from "../../redux/slices/checkoutSlice";
 import { fetchProducts } from "../../redux/slices/productSlice";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { clearCartServer } from "../../api/cartApi";
+
+// ✅ Toast helpers (compact bottom pill)
+import { toastSuccess, toastError, toastInfo } from "../../utils/toast";
+import { useTranslation } from "react-i18next";
 
 export default function PlaceOrder({ navigation, route }) {
   const cart = useSelector((state) => state.cart);
   const checkout = useSelector((state) => state.checkout);
   const dispatch = useDispatch();
+  const { colors } = useDynamicStyles();
+  const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   const selectedAddress = route?.params?.address || null;
   const selectedAddressId = route?.params?.addressId || null;
@@ -30,19 +38,20 @@ export default function PlaceOrder({ navigation, route }) {
     location: "",
   });
 
-  const { colors } = useDynamicStyles();
-  const styles = createStyles(colors);
-
   const placeholders = {
-    name: "Full Name",
-    phoneNo: "Phone Number",
-    pincode: "Pincode",
-    state: "State",
-    city: "City",
-    buildingName: "Building / Flat Name",
-    area: "Area / Street",
-    location: "Landmark (optional)",
+    name: t("order.fullName"),
+    phoneNo: t("order.phoneNumber"),
+    pincode: t("order.pincode"),
+    state: t("order.state"),
+    city: t("order.city"),
+    buildingName: t("order.buildingName"),
+    area: t("order.areaStreet"),
+    location: t("order.landmarkOptional"),
   };
+
+  // ✅ Only these fields should block placing the order
+  const REQUIRED_FIELDS = ["name", "phoneNo", "pincode", "state", "city", "area"];
+  const isRequired = (key) => REQUIRED_FIELDS.includes(key);
 
   const cartSubtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.product.price * item.qty, 0),
@@ -55,10 +64,68 @@ export default function PlaceOrder({ navigation, route }) {
     checkout.finalTotal || Math.max(0, displaySubtotal - displayDiscount);
   const couponCode = checkout.couponCode || "";
 
+  // ✅ Helpers
+  const digitsOnly = (s = "") => String(s).replace(/\D/g, "");
+
+  // ✅ Validate only required fields (rest remains optional)
+  const validateManualAddress = (addr) => {
+    const normalized = {
+      name: addr?.name?.trim() ?? "",
+      phoneNo: digitsOnly(addr?.phoneNo ?? ""),
+      pincode: digitsOnly(addr?.pincode ?? ""),
+      state: addr?.state?.trim() ?? "",
+      city: addr?.city?.trim() ?? "",
+      buildingName: addr?.buildingName?.trim() ?? "",
+      area: addr?.area?.trim() ?? "",
+      location: addr?.location?.trim() ?? "",
+      type: addr?.type ?? "home",
+    };
+
+    const fieldErrMsgMap = {
+      name: t("order.fullName"),
+      phoneNo: t("order.phoneNumber"),
+      pincode: t("order.pincode"),
+      state: t("order.state"),
+      city: t("order.city"),
+      area: t("order.areaStreet"),
+    };
+
+    for (const key of REQUIRED_FIELDS) {
+      const val = normalized[key];
+
+      // Required empty check
+      if (!val) {
+        return { ok: false, msg: fieldErrMsgMap[key] || t("common.error.generic") };
+      }
+
+      // Format checks only for required fields (phone/pincode)
+      if (key === "phoneNo" && String(val).length !== 10) {
+        return { ok: false, msg: t("profile.validation.phone10") };
+      }
+      if (key === "pincode" && String(val).length !== 6) {
+        return { ok: false, msg: t("profile.validation.pincode6") };
+      }
+    }
+
+    return { ok: true };
+  };
+
+  const getErrMsg = (e) =>
+    e?.response?.data?.message || e?.message || t("common.error.generic");
+
   const handlePlaceOrder = async () => {
     if (!cart.length) {
-      console.log("Cart empty, cannot place order");
+      toastInfo(t("cart.empty.title"), t("cart.empty.subtitle"));
       return;
+    }
+
+    // ✅ If no saved address selected, validate only required address fields
+    if (!selectedAddressId && !selectedAddress) {
+      const v = validateManualAddress(manualAddress);
+      if (!v.ok) {
+        toastError(t("order.addressIncomplete.title"), v.msg);
+        return;
+      }
     }
 
     try {
@@ -79,14 +146,23 @@ export default function PlaceOrder({ navigation, route }) {
 
       const order = await createOrder(payload);
 
-      // Reset local state after successful order
+      // ✅ Clear server cart (await the API)
+      await clearCartServer();
+
+      // ✅ Clear local state
       dispatch(clearCart());
       dispatch(clearCheckoutTotals());
       dispatch(fetchProducts(1));
 
+      const orderIdText = order?.id
+        ? t("order.orderNumber", { id: order.id })
+        : t("order.orderPlaced");
+      toastSuccess(orderIdText, t("order.orderPlacedSubtitle"));
+
       navigation.replace("OrderSuccess", { order });
     } catch (err) {
       console.log("Place order error:", err?.response?.data || err.message);
+      toastError(t("order.orderFailed.title"), getErrMsg(err));
     }
   };
 
@@ -95,23 +171,29 @@ export default function PlaceOrder({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-      <Text style={styles.title}>Place Order</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 24 }}
+      keyboardShouldPersistTaps="always"  // ✅ keep keyboard open while typing/tapping
+    >
+      <Text style={styles.title}>{t("order.placeOrder")}</Text>
 
       {/* ---- Summary ---- */}
       <View style={styles.summaryBox}>
-        <Text style={styles.summaryText}>Items: {cart.length}</Text>
+        <Text style={styles.summaryText}>
+          {t("order.items")}: {cart.length}
+        </Text>
         <View style={{ alignItems: "flex-end" }}>
           <Text style={styles.summaryText}>
-            Subtotal: ₹ {displaySubtotal.toLocaleString("en-IN")}
+            {t("order.subtotal")}: ₹ {displaySubtotal.toLocaleString("en-IN")}
           </Text>
           {displayDiscount > 0 && (
             <Text style={[styles.summaryText, { color: colors.error }]}>
-              Discount: - ₹ {displayDiscount.toLocaleString("en-IN")}
+              {t("order.discount")}: - ₹ {displayDiscount.toLocaleString("en-IN")}
             </Text>
           )}
           <Text style={[styles.summaryText, { color: colors.priceText, fontWeight: "800" }]}>
-            Payable: ₹ {displayPayable.toLocaleString("en-IN")}
+            {t("order.payable")}: ₹ {displayPayable.toLocaleString("en-IN")}
           </Text>
         </View>
       </View>
@@ -119,7 +201,9 @@ export default function PlaceOrder({ navigation, route }) {
       {/* ---- Address Section ---- */}
       {selectedAddress ? (
         <View style={styles.addressBox}>
-          <Text style={styles.sectionTitle}>Deliver To (Saved Address)</Text>
+          <Text style={styles.sectionTitle}>
+            {t("order.deliverTo")} ({t("order.useSavedAddressShort")})
+          </Text>
           <Text style={styles.addrLine}>
             {selectedAddress.name} ({selectedAddress.type})
           </Text>
@@ -132,16 +216,16 @@ export default function PlaceOrder({ navigation, route }) {
           <Text style={styles.addrLine}>📞 {selectedAddress.phoneNo}</Text>
 
           <TouchableOpacity style={styles.changeBtn} onPress={goSelectAddress} activeOpacity={0.85}>
-            <Text style={styles.changeText}>Change Address</Text>
+            <Text style={styles.changeText}>{t("order.changeAddress")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
           <View style={styles.addressBox}>
             <View style={styles.addressHeaderRow}>
-              <Text style={styles.sectionTitle}>Shipping Address</Text>
+              <Text style={styles.sectionTitle}>{t("order.shippingAddress")}</Text>
               <TouchableOpacity onPress={goSelectAddress} activeOpacity={0.85}>
-                <Text style={styles.linkText}>Use Saved Address</Text>
+                <Text style={styles.linkText}>{t("order.useSavedAddress")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -151,30 +235,37 @@ export default function PlaceOrder({ navigation, route }) {
               "pincode",
               "state",
               "city",
-              "buildingName",
+              "buildingName", // optional
               "area",
-              "location",
+              "location",     // optional
             ].map((key, idx, arr) => (
-              <TextInput
-                key={key}
-                placeholder={placeholders[key]}
-                placeholderTextColor={colors.inputPlaceholder}
-                style={styles.input}
-                value={String(manualAddress[key] ?? "")}
-                onChangeText={(txt) =>
-                  setManualAddress((prev) => ({ ...prev, [key]: txt }))
-                }
-                autoCapitalize={
-                  key === "name" || key === "state" || key === "city" ? "words" : "none"
-                }
-                autoCorrect={false}
-                keyboardType={
-                  key === "phoneNo" ? "phone-pad" :
-                  key === "pincode" ? "number-pad" : "default"
-                }
-                returnKeyType={idx < arr.length - 1 ? "next" : "done"}
-                blurOnSubmit={false}
-              />
+              <View key={key} style={{ marginBottom: 8 }}>
+                {/* ✅ Label with asterisk for mandatory fields */}
+                <Text style={styles.inputLabel}>
+                  {placeholders[key]}
+                  {isRequired(key) && <Text style={styles.requiredStar}> *</Text>}
+                </Text>
+
+                <TextInput
+                  placeholder={placeholders[key]}
+                  placeholderTextColor={colors.inputPlaceholder}
+                  style={styles.input}
+                  value={String(manualAddress[key] ?? "")}
+                  onChangeText={(txt) =>
+                    setManualAddress((prev) => ({ ...prev, [key]: txt }))
+                  }
+                  autoCapitalize={
+                    key === "name" || key === "state" || key === "city" ? "words" : "none"
+                  }
+                  autoCorrect={false}
+                  keyboardType={
+                    key === "phoneNo" ? "phone-pad" :
+                    key === "pincode" ? "number-pad" : "default"
+                  }
+                  returnKeyType={idx < arr.length - 1 ? "next" : "done"}
+                  blurOnSubmit={false}
+                />
+              </View>
             ))}
           </View>
         </>
@@ -182,8 +273,8 @@ export default function PlaceOrder({ navigation, route }) {
 
       {/* ---- Payment ---- */}
       <View style={styles.paymentBox}>
-        <Text style={styles.sectionTitle}>Payment Method</Text>
-        <Text style={styles.paymentText}>• Cash on Delivery (COD)</Text>
+        <Text style={styles.sectionTitle}>{t("order.paymentMethod")}</Text>
+        <Text style={styles.paymentText}>• {t("order.cod")}</Text>
       </View>
 
       {/* ---- Place Order Button ---- */}
@@ -194,7 +285,7 @@ export default function PlaceOrder({ navigation, route }) {
         activeOpacity={0.85}
       >
         <Text style={styles.orderText}>
-          Place Order • ₹ {displayPayable.toLocaleString("en-IN")}
+          {t("order.placeOrder")} • ₹ {displayPayable.toLocaleString("en-IN")}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -202,9 +293,9 @@ export default function PlaceOrder({ navigation, route }) {
 }
 
 /* ------------- STYLES ------------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.primaryBg, padding: 12 },
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.primaryBg, padding: 12,marginBottom:75 },
     title: { fontSize: 22, fontWeight: "800", marginBottom: 12, color: colors.primaryText },
 
     summaryBox: {
@@ -236,6 +327,19 @@ const createStyles = (colors) =>
       marginBottom: 4,
     },
     addrLine: { fontSize: 14, color: colors.secondaryText },
+
+    // ✅ New: label + required star styles
+    inputLabel: {
+      fontSize: 13,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: colors.primaryText,
+    },
+    requiredStar: {
+      color: colors.brandAccent,
+      fontWeight: "900",
+      marginLeft: 2,
+    },
 
     input: {
       borderWidth: 1,
@@ -285,3 +389,4 @@ const createStyles = (colors) =>
       fontWeight: "700",
     },
   });
+}

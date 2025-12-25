@@ -3,24 +3,26 @@ import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Alert
 } from "react-native";
-
 import { getMyAddresses, removeAddress } from "../../api/addressApi";
 import { useNavigation } from "@react-navigation/native";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function ManageAddress() {
   const [addresses, setAddresses] = useState([]);
   const navigation = useNavigation();
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   const load = async () => {
     try {
       const data = await getMyAddresses();
-      console.log("📌 Address List:", data);
       setAddresses(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.log("❌ Error loading address:", err.response?.data || err.message);
+      console.log("❌ Error loading address:", err?.response?.data || err?.message);
+      Alert.alert(t("profile.error.title"), t("order.addressesLoadFailed"));
+      setAddresses([]);
     }
   };
 
@@ -31,19 +33,22 @@ export default function ManageAddress() {
 
   const deleteAddr = (id) => {
     Alert.alert(
-      "Delete Address?",
-      "Are you sure you want to remove this address?",
+      t("order.deleteAddressConfirmTitle"),
+      t("order.deleteAddressConfirmMsg"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete", { defaultValue: "Delete" }),
           style: "destructive",
           onPress: async () => {
             try {
               await removeAddress(id);
               load(); // refresh list
             } catch (e) {
-              Alert.alert("Error", e?.response?.data?.message || e?.message || "Failed to delete address");
+              Alert.alert(
+                t("profile.error.title"),
+                e?.response?.data?.message || e?.message || t("order.deleteAddressFailed")
+              );
             }
           }
         }
@@ -53,7 +58,7 @@ export default function ManageAddress() {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Text style={styles.name}>{item.name} ({item.type || "N/A"})</Text>
+      <Text style={styles.name}>{item.name} ({item.type || t("order.addressTypeNA")})</Text>
       <Text style={styles.line}>{item.buildingName}, {item.area}</Text>
       <Text style={styles.line}>{item.city}, {item.state} - {item.pincode}</Text>
       {!!item.phoneNo && <Text style={styles.line}>📞 {item.phoneNo}</Text>}
@@ -64,8 +69,10 @@ export default function ManageAddress() {
           style={[styles.btn, styles.edit]}
           onPress={() => navigation.navigate("AddAddress", { editMode: true, address: item })}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.edit", { defaultValue: "Edit" })}
         >
-          <Text style={styles.btnTxt}>Edit</Text>
+          <Text style={styles.btnTxt}>{t("common.edit", { defaultValue: "Edit" })}</Text>
         </TouchableOpacity>
 
         {/* DELETE */}
@@ -73,8 +80,10 @@ export default function ManageAddress() {
           style={[styles.btn, styles.delete]}
           onPress={() => deleteAddr(item.id)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.delete", { defaultValue: "Delete" })}
         >
-          <Text style={styles.btnTxt}>🗑 Delete</Text>
+          <Text style={styles.btnTxt}>🗑 {t("common.delete", { defaultValue: "Delete" })}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -82,14 +91,14 @@ export default function ManageAddress() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Saved Addresses</Text>
+      <Text style={styles.title}>{t("order.manageAddressesTitle", { defaultValue: "My Saved Addresses" })}</Text>
 
       <FlatList
         data={addresses}
         keyExtractor={(i) => i.id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={styles.empty}>No saved address yet.</Text>
+          <Text style={styles.empty}>{t("order.noSavedAddresses")}</Text>
         }
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
@@ -99,16 +108,18 @@ export default function ManageAddress() {
         style={styles.addBtn}
         onPress={() => navigation.navigate("AddAddress")}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("order.addNewAddress")}
       >
-        <Text style={styles.addTxt}>➕ Add Address</Text>
+        <Text style={styles.addTxt}>➕ {t("order.addNewAddress")}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 /* ---------- STYLES ---------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, padding: 14, backgroundColor: colors.primaryBg },
     title: { fontSize: 22, fontWeight: "800", marginBottom: 10, color: colors.primaryText },
 
@@ -148,3 +159,4 @@ const createStyles = (colors) =>
 
     empty: { textAlign: "center", marginTop: 30, color: colors.secondaryText },
   });
+}

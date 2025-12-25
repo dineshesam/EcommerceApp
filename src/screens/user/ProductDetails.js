@@ -1,16 +1,18 @@
 
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Platform } from "react-native";
+import React, { useMemo, useState } from "react";
+import {
+  View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Platform, Dimensions, FlatList
+} from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { addCart } from "../../redux/slices/cartSlice"; // same action as ProductCard
+import { addCart } from "../../redux/slices/cartSlice";
 import { addWishlist, removeWishlist } from "../../redux/slices/wishlistSlice";
 import { addToWishlistServer, removeFromWishlistServer } from "../../api/wishlistApi";
 import { addToCartServer } from "../../api/cartApi";
 import makeImageUrl from "../../utils/makeImageUrl";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
-import { FlatList, Dimensions } from "react-native";
-import { useState } from "react";
+import { toastSuccess, toastError, toastInfo } from "../../utils/toast";
+import { useTranslation } from "react-i18next";
 
 export default function ProductDetails() {
   const route = useRoute();
@@ -19,7 +21,7 @@ export default function ProductDetails() {
   const dispatch = useDispatch();
   const wishlist = useSelector(state => state.wishlist);
 
-  // ✅ Fixed: avoid referencing `liveStock` inside the selector; fall back to product.stock
+  // Live stock from store; fallback to product.stock
   const liveStock = useSelector(state => {
     const p = state.products.items.find(item => item.id === product.id);
     if (typeof p?.stock === "number") return p.stock;
@@ -27,7 +29,6 @@ export default function ProductDetails() {
     return 0;
   });
 
-  // const image = makeImageUrl(product?.images?.[0]);
   const images = (product?.images || []).map(img => makeImageUrl(img));
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -37,8 +38,13 @@ export default function ProductDetails() {
   const [wishLoading, setWishLoading] = React.useState(false);
   const [cartLoading, setCartLoading] = React.useState(false);
 
+  const cart = useSelector((state) => state.cart);
+  const cartIds = useMemo(() => new Set(cart.map((c) => c.productId)), [cart]);
+  const inCart = cartIds.has(product.id);
+
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   const handleWishlist = async () => {
     if (wishLoading) return;
@@ -48,10 +54,12 @@ export default function ProductDetails() {
         // Optimistic remove
         dispatch(removeWishlist(product.id));
         await removeFromWishlistServer(product.id);
+        toastInfo(t("wishlist.removed.title"), product.name);
       } else {
         // Optimistic add
         dispatch(addWishlist(product));
         await addToWishlistServer(product.id);
+        toastSuccess(t("wishlist.addedToCart.title"), product.name); // or create wishlist.added.title
       }
     } catch (err) {
       // Rollback
@@ -61,6 +69,7 @@ export default function ProductDetails() {
         dispatch(removeWishlist(product.id));
       }
       console.log("Wishlist Sync Error (Details):", err?.message || err);
+      toastError(t("wishlist.removeFailed.title"), err?.response?.data?.message || err?.message || t("common.error.generic"));
     } finally {
       setWishLoading(false);
     }
@@ -74,9 +83,11 @@ export default function ProductDetails() {
       dispatch(addCart({ productId: product.id, qty: 1, product }));
       // Backend sync
       await addToCartServer(product.id);
+      toastSuccess(t("wishlist.addedToCart.title"), product.name); // Using existing toast title
     } catch (err) {
       console.log("Cart Sync Error (Details):", err?.message || err);
-      // Optional rollback:
+      toastError(t("cart.addFailed.title", { defaultValue: "Add to cart failed" }), err?.response?.data?.message || err?.message || t("common.error.generic"));
+      // Optional rollback
       // dispatch(removeFromCart(product.id));
     } finally {
       setCartLoading(false);
@@ -87,9 +98,7 @@ export default function ProductDetails() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Product Image */}
-      {/* <Image source={{ uri: image }} style={styles.mainImage} />
-       */}
+      {/* Image carousel */}
       <FlatList
         data={images}
         horizontal
@@ -119,8 +128,7 @@ export default function ProductDetails() {
         ))}
       </View>
 
-
-      {/* Wishlist pill (emoji stays as-is; container adapts to theme) */}
+      {/* Wishlist pill */}
       <TouchableOpacity style={styles.wishBtn} onPress={handleWishlist} disabled={wishLoading}>
         <Text style={styles.wishIcon}>
           {wishLoading ? "⏳" : isWishlisted ? "❤️" : "🤍"}
@@ -131,25 +139,25 @@ export default function ProductDetails() {
         <Text style={styles.title}>{product.name}</Text>
         <Text style={styles.price}>₹ {Number(product.price).toLocaleString("en-IN")}</Text>
 
-        <Text style={styles.label}>Description</Text>
+        <Text style={styles.label}>{t("product.description")}</Text>
         <Text style={styles.description}>{product.description}</Text>
 
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>{t("product.category")}</Text>
         <Text style={styles.meta}>{product.category}</Text>
 
-        <Text style={styles.label}>Stock</Text>
+        <Text style={styles.label}>{t("shop.inStock")}</Text>
         <Text style={[styles.meta, isOut ? styles.outStock : styles.inStock]}>
-          {isOut ? "Out of Stock" : `In Stock (${liveStock})`}
+          {isOut ? t("shop.outOfStock") : t("shop.inStockCount", { count: liveStock })}
         </Text>
 
         {/* Add to Cart */}
         <TouchableOpacity
-          style={[styles.cartBtn, isOut && styles.cartBtnDisabled]}
+          style={[styles.cartBtn, (isOut || inCart) && styles.cartBtnDisabled]}
           onPress={handleAddCart}
-          disabled={cartLoading || isOut}
+          disabled={cartLoading || isOut || inCart}
         >
-          <Text style={[styles.cartText, isOut && { color: colors.disabledButtonText }]}>
-            {cartLoading ? "Adding..." : "Add to Cart 🛒"}
+          <Text style={[styles.cartText, (isOut || inCart) && { color: colors.disabledButtonText }]}>
+            {inCart ? t("shop.inCart") : isOut ? t("shop.outOfStock") : t("shop.addToCart")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -158,12 +166,12 @@ export default function ProductDetails() {
 }
 
 /* ================== Styles ==================== */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBg },
     mainImage: { width: "100%", height: 300, resizeMode: "cover" },
 
-    // Wishlist pill – uses input surface; shadow adapts to theme
+    // Wishlist pill
     wishBtn: {
       position: "absolute",
       top: 20,
@@ -175,11 +183,11 @@ const createStyles = (colors) =>
       zIndex: 10,
       ...(Platform.OS === "ios"
         ? {
-          shadowColor: colors.shadow,
-          shadowOpacity: 0.2,
-          shadowRadius: 6,
-          shadowOffset: { width: 0, height: 3 },
-        }
+            shadowColor: colors.shadow,
+            shadowOpacity: 0.2,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 3 },
+          }
         : {}),
     },
     wishIcon: { fontSize: 25 },
@@ -194,7 +202,7 @@ const createStyles = (colors) =>
     description: { fontSize: 14, color: colors.secondaryText, marginTop: 4 },
     meta: { fontSize: 14, color: colors.secondaryText, marginTop: 4 },
 
-    // Stock states use semantic inventory tokens
+    // Stock states
     inStock: { color: colors.inventoryInStock, fontWeight: "700" },
     outStock: { color: colors.inventoryOutOfStock, fontWeight: "700" },
 
@@ -209,6 +217,8 @@ const createStyles = (colors) =>
       backgroundColor: colors.disabledButtonBg,
     },
     cartText: { color: colors.ctaButtonText, fontSize: 16, fontWeight: "700", textAlign: "center" },
+
+    // Dots
     dotsContainer: {
       flexDirection: "row",
       justifyContent: "center",
@@ -226,5 +236,5 @@ const createStyles = (colors) =>
       width: 10,
       height: 10
     }
-
   });
+}

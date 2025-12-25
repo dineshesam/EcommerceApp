@@ -14,6 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 import { launchImageLibrary } from "react-native-image-picker";
 import api from "../../api/axiosConfig"; // axios instance with baseURL
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function EditProfile() {
   const navigation = useNavigation();
@@ -23,6 +24,7 @@ export default function EditProfile() {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadUser();
@@ -58,7 +60,7 @@ export default function EditProfile() {
   const updateNameApi = async (newName) => {
     const token = await AsyncStorage.getItem("userToken");
     if (!token) {
-      throw new Error("Unauthorized: Please login again.");
+      throw new Error(t("profile.unauthorized"));
     }
     const res = await api.patch(
       "/auth/update-name",
@@ -71,10 +73,10 @@ export default function EditProfile() {
   const saveProfile = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      return Alert.alert("Validation", "Name cannot be empty");
+      return Alert.alert(t("profile.validation.title"), t("profile.validation.nameEmpty"));
     }
     if (trimmed.length < 2) {
-      return Alert.alert("Validation", "Name must be at least 2 characters");
+      return Alert.alert(t("profile.validation.title"), t("profile.validation.nameTooShort"));
     }
 
     try {
@@ -95,18 +97,19 @@ export default function EditProfile() {
 
       await AsyncStorage.setItem("userData", JSON.stringify(mergedUser));
 
-      Alert.alert("Success", "Profile updated successfully", [
-        { text: "OK", onPress: () => navigation.goBack() }
+      Alert.alert(t("profile.success.title"), t("profile.success.updated"), [
+        { text: t("common.ok", { defaultValue: "OK" }), onPress: () => navigation.goBack() }
       ]);
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "Failed to update profile";
+        t("profile.updateFailed");
+
       if (/unauthorized|token|jwt/i.test(msg)) {
-        Alert.alert("Session expired", "Please login again.", [
+        Alert.alert(t("profile.sessionExpired.title"), t("profile.sessionExpired.msg"), [
           {
-            text: "OK",
+            text: t("common.ok", { defaultValue: "OK" }),
             onPress: async () => {
               await AsyncStorage.removeItem("userToken");
               await AsyncStorage.removeItem("userData");
@@ -115,7 +118,7 @@ export default function EditProfile() {
           }
         ]);
       } else {
-        Alert.alert("Error", msg);
+        Alert.alert(t("profile.error.title"), msg);
       }
     } finally {
       setLoading(false);
@@ -126,22 +129,28 @@ export default function EditProfile() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Edit Profile</Text>
+      <Text style={styles.header}>{t("profile.editProfile")}</Text>
 
       {/* Avatar (local-only for now) */}
-      <TouchableOpacity style={styles.avatarBox} onPress={pickImage} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={styles.avatarBox}
+        onPress={pickImage}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("profile.changePhoto")}
+      >
         <View style={styles.avatarRing}>
           <Image source={avatarSrc} style={styles.avatar} />
         </View>
-        <Text style={styles.changePhoto}>Change Photo</Text>
+        <Text style={styles.changePhoto}>{t("profile.changePhoto")}</Text>
       </TouchableOpacity>
 
       {/* Name */}
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>{t("profile.nameLabel")}</Text>
       <TextInput
         value={name}
         onChangeText={setName}
-        placeholder="Enter your name"
+        placeholder={t("profile.enterYourName")}
         placeholderTextColor={colors.inputPlaceholder}
         style={styles.input}
         autoCapitalize="words"
@@ -156,9 +165,11 @@ export default function EditProfile() {
         onPress={saveProfile}
         disabled={loading}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("profile.saveChanges")}
       >
         <Text style={styles.saveText}>
-          {loading ? "Saving..." : "Save Changes"}
+          {loading ? t("profile.saving") : t("profile.saveChanges")}
         </Text>
       </TouchableOpacity>
     </View>
@@ -166,8 +177,8 @@ export default function EditProfile() {
 }
 
 /* ---------- STYLES ---------- */
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     container: {
       flex: 1,
       padding: 20,
@@ -235,3 +246,4 @@ const createStyles = (colors) =>
       textAlign: "center"
     }
   });
+}

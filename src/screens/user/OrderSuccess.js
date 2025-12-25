@@ -2,40 +2,57 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+import { useTranslation } from "react-i18next";
 
 export default function OrderSuccess({ route, navigation }) {
   const { order } = route.params || {};
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   return (
     <View style={styles.box}>
-      <Text style={styles.big}>✅ Order Placed!</Text>
+      {/* Title */}
+      <Text style={styles.big}>✅ {t("order.orderPlaced")}</Text>
 
-      {/* Order ID chip (optional visual highlight) */}
+      {/* Optional subtitle */}
+      <Text style={styles.small}>{t("order.orderPlacedSubtitle")}</Text>
+
+      {/* Order ID chip */}
       {order?.id && (
-        <View style={styles.orderChip}>
-          <Text style={styles.orderChipText}>Order ID: {order.id}</Text>
+        <View style={styles.orderChip} accessibilityRole="text">
+          <Text style={styles.orderChipText}>
+            {t("order.orderNumber", { id: order.id })}
+          </Text>
         </View>
       )}
 
-      <TouchableOpacity onPress={() => navigation.navigate("Orders")} activeOpacity={0.85}>
-        <Text style={styles.link}>View My Orders →</Text>
+      {/* View Orders */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Orders")}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("order.viewMyOrders")}
+      >
+        <Text style={styles.link}>{t("order.viewMyOrders")} →</Text>
       </TouchableOpacity>
 
+      {/* Back to Home */}
       <TouchableOpacity
         onPress={() => navigation.navigate("Home")}
         style={styles.homeBtn}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t("order.backToHome")}
       >
-        <Text style={styles.homeText}>Back to Home</Text>
+        <Text style={styles.homeText}>{t("order.backToHome")}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const createStyles = (colors) =>
-  StyleSheet.create({
+function createStyles(colors) {
+  return StyleSheet.create({
     box: {
       flex: 1,
       alignItems: "center",
@@ -44,11 +61,8 @@ const createStyles = (colors) =>
       paddingHorizontal: 24,
     },
     big: { fontSize: 26, fontWeight: "800", color: colors.primaryText },
-
-    // Subheadline shown when needed; you can use it below the title if preferred
     small: { fontSize: 14, marginTop: 6, color: colors.secondaryText },
 
-    // Order ID chip
     orderChip: {
       marginTop: 10,
       paddingHorizontal: 12,
@@ -61,7 +75,7 @@ const createStyles = (colors) =>
     orderChipText: {
       fontSize: 14,
       fontWeight: "700",
-      color: colors.success, // success accent
+      color: colors.success,
     },
 
     link: { color: colors.brandAccent, marginTop: 12, fontSize: 16, fontWeight: "600" },
@@ -76,3 +90,4 @@ const createStyles = (colors) =>
     },
     homeText: { color: colors.ctaButtonText, fontWeight: "700", fontSize: 15 },
   });
+}

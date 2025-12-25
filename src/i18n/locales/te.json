@@ -1,0 +1,194 @@
+
+{
+  "shop": {
+    "searchProducts": "ఉత్పత్తులు వెతకండి",
+    "recommendedForYou": "మీ కోసం సిఫార్సు చేయబడింది",
+    "allProducts": "అన్ని ఉత్పత్తులు",
+    "inStockCount": "స్టాక్‌లో: {{count}}",
+    "inCart": "కార్ట్‌లో ఉంది",
+    "addToCart": "కార్ట్‌లో జోడించండి",
+    "remove": "తొలగించండి",
+    "inStock": "స్టాక్‌లో ఉంది",
+    "outOfStock": "స్టాక్ అయిపోయింది",
+    "proceedToCheckout": "చెకౌట్‌కి కొనసాగండి",
+    "all": "అన్ని",
+    "filter": "ఫిల్టర్",
+    "sortBy": "క్రమబద్ధీకరించు",
+    "noProductsFound": "ఉత్పత్తులు కనబడలేదు",
+    "sort": {
+      "relevance": "సంబంధం",
+      "priceLow": "ధర ↑",
+      "priceHigh": "ధర ↓",
+      "newest": "తాజా",
+      "nameAZ": "పేరు A–Z"
+    }
+  },
+
+  "product": {
+    "description": "వివరణ",
+    "category": "వర్గం"
+  },
+
+  "wishlist": {
+    
+"added": {
+    "title": "విష్‌లిస్ట్‌లో జోడించబడింది"
+  }
+,
+    "empty": "విష్‌లిస్ట్‌లో అంశాలు లేవు 😕",
+    "removed": { "title": "విష్‌లిస్ట్ నుండి తొలగించబడింది" },
+    "removeFailed": { "title": "తొలగించడం విఫలమైంది" },
+    "addedToCart": { "title": "కార్ట్‌లో జోడించబడింది" },
+    "moveToCartFailed": { "title": "కార్ట్‌కి తరలించడం విఫలమైంది" },
+    "alreadyInCart": { "title": "ఇప్పటికే కార్ట్‌లో ఉంది" }
+  },
+
+  "order": {
+    "orderSummary": "ఆర్డర్ సారాంశం",
+    
+ "addressTypeHint": "చిరునామా రకం (ఇంటి/ఆఫీస్)",
+  "myOrders": "నా ఆర్డర్లు",
+
+    "subtotal": "ఉపమొత్తం",
+    "payable": "చెల్లించవలసినది",
+    "applyCoupon": "కూపన్ వర్తించు",
+    "showCoupons": "కూపన్లు చూపించు",
+    "hideCoupons": "కూపన్లు దాచు",
+    "apply": "వర్తించు",
+    "enterCouponCode": "కూపన్ కోడ్ నమోదు చేయండి",
+    "proceedToPlaceOrder": "ఆర్డర్ చేయడానికి కొనసాగండి",
+    "placeOrder": "ఆర్డర్ చేయండి",
+    "items": "అంశాలు",
+    "discount": "డిస్కౌంట్",
+    "shippingAddress": "షిప్పింగ్ చిరునామా",
+    "useSavedAddress": "సేవ్ చేసిన చిరునామా ఉపయోగించండి",
+    "paymentMethod": "చెల్లింపు విధానం",
+    "mySavedAddresses": "నా సేవ్ చేసిన చిరునామాలు",
+    "deliverTo": "డెలివరీ చేయండి",
+    "changeAddress": "చిరునామా మార్చండి",
+    "orderPlaced": "ఆర్డర్ చేయబడింది",
+    "viewMyOrders": "నా ఆర్డర్లు చూడండి",
+    "backToHome": "హోమ్‌కి తిరిగి వెళ్ళండి",
+    "manageAddressesTitle": "నా సేవ్ చేసిన చిరునామాలు",
+
+    "noSavedAddresses": "సేవ్ చేసిన చిరునామా లేదు.",
+    "addressesLoadFailed": "చిరునామాలు లోడ్ చేయలేకపోయాం",
+    "deleteAddressConfirmTitle": "చిరునామా తొలగించాలా?",
+    "deleteAddressConfirmMsg": "మీరు నిజంగా ఈ చిరునామాను తొలగించాలనుకుంటున్నారా?",
+    "deleteAddressFailed": "చిరునామా తొలగించడం విఫలమైంది",
+    "addressTypeNA": "లభ్యం కాదు",
+    "addNewAddress": "కొత్త చిరునామా జోడించండి",
+
+    "applying": "వర్తింపజేస్తున్నాం...",
+    "enterCouponCodePrompt": "దయచేసి కూపన్ కోడ్ నమోదు చేయండి",
+    "invalidCoupon": "చెల్లని కూపన్",
+    "couponValidationFailed": "కూపన్ ధృవీకరణ విఫలమైంది",
+    "loadingCoupons": "కూపన్లు లోడ్ అవుతున్నాయి...",
+    "couponsLoadFailed": "కూపన్లు లోడ్ చేయలేకపోయాం",
+    "noAvailableCoupons": "లభ్యమయ్యే కూపన్లు లేవు",
+    "couponFlat": "ఫ్లాట్ ₹{{value}}",
+    "couponPercent": "{{value}}% తగ్గింపు",
+
+    "orderNumber": "ఆర్డర్ #{{id}}",
+    "orderPlacedSubtitle": "మీకు త్వరలో ధృవీకరణ వస్తుంది",
+    "orderFailed": { "title": "ఆర్డర్ విఫలమైంది" },
+    "addressIncomplete": { "title": "చిరునామా అసంపూర్ణంగా ఉంది" },
+
+    "fullName": "పూర్తి పేరు",
+    "phoneNumber": "ఫోన్ నంబర్",
+    "pincode": "పిన్‌కోడ్",
+    "state": "రాష్ట్రం",
+    "city": "నగరం",
+    "buildingName": "భవనం / ఫ్లాట్ పేరు",
+    "areaStreet": "ప్రాంతం / వీధి",
+    "landmarkOptional": "ల్యాండ్‌మార్క్ (ఐచ్చికం)",
+
+    "useSavedAddressShort": "సేవ్ చేసిన చిరునామా",
+    "cod": "డెలివరీ సమయంలో నగదు (COD)"
+  },
+
+  "profile": {
+    "changePhoto": "ఫోటో మార్చండి",
+    "nameLabel": "పేరు",
+    "enterYourName": "మీ పేరు నమోదు చేయండి",
+    "saveChanges": "మార్పులను సేవ్ చేయండి",
+    "saving": "సేవ్ అవుతోంది...",
+    "success": { "title": "విజయం", "updated": "ప్రొఫైల్ విజయవంతంగా నవీకరించబడింది" },
+    "error": { "title": "లోపం" },
+    "updateFailed": "ప్రొఫైల్ నవీకరణ విఫలమైంది",
+
+    "sessionExpired": { "title": "సెషన్ ముగిసింది", "msg": "దయచేసి మళ్లీ లాగిన్ అవ్వండి." },
+    "validation": {
+      "title": "ధృవీకరణ",
+      "nameEmpty": "పేరు ఖాళీగా ఉండకూడదు",
+      "nameTooShort": "పేరు కనీసం 2 అక్షరాలు ఉండాలి",
+      "phone10": "ఫోన్ నంబర్‌లో కేవలం 10 అంకెలు ఉండాలి",
+      "pincode6": "పిన్‌కోడ్‌లో కేవలం 6 అంకెలు ఉండాలి"
+
+    },
+    "unauthorized": "అనుమతి లేదు: దయచేసి మళ్లీ లాగిన్ అవ్వండి.",
+
+    "editPhoto": "సవరించండి",
+    "delete": "తొలగించండి",
+    "addAddress": "చిరునామా జోడించండి",
+    "currentPassword": "ప్రస్తుత పాస్‌వర్డ్",
+    "newPassword": "కొత్త పాస్‌వర్డ్",
+    "confirmNewPassword": "కొత్త పాస్‌వర్డ్‌ను నిర్ధారించండి",
+    "show": "చూపించు",
+    "hide": "దాచు",
+    "updatePassword": "పాస్‌వర్డ్‌ను నవీకరించండి",
+    "editProfile": "ప్రొఫైల్ సవరించండి",
+    "changePassword": "పాస్‌వర్డ్ మార్చండి",
+    "manageAddress": "చిరునామా నిర్వహించండి",
+    "myOrders": "నా ఆర్డర్లు",
+    "logout": "లాగ్ అవుట్",
+    "confirmLogoutTitle": "లాగ్ అవుట్‌ను నిర్ధారించండి",
+    "confirmLogoutMsg": "మీరు నిజంగా లాగ్ అవుట్ కావాలనుకుంటున్నారా?",
+    "admin": "అడ్మిన్",
+    "customer": "కస్టమర్",
+    "updating": "నవీకరిస్తున్నాం...",
+
+    "password": {
+      "enterCurrent": "ప్రస్తుత పాస్‌వర్డ్ నమోదు చేయండి",
+      "enterNew": "కొత్త పాస్‌వర్డ్ నమోదు చేయండి",
+      "reenterNew": "కొత్త పాస్‌వర్డ్‌ను మళ్లీ నమోదు చేయండి",
+      "changedSuccess": "పాస్‌వర్డ్ విజయవంతంగా మార్చబడింది. దయచేసి మళ్లీ లాగిన్ అవ్వండి.",
+      "changeFailed": "పాస్‌వర్డ్ మార్చడం విఫలమైంది",
+      "allRequired": "అన్ని ఫీల్డ్‌లు అవసరం",
+      "minLength": "పాస్‌వర్డ్ కనీసం 8 అక్షరాలు ఉండాలి",
+      "mismatch": "పాస్‌వర్డ్‌లు సరిపోలడం లేదు",
+      "sameAsOld": "కొత్త పాస్‌వర్డ్ ప్రస్తుత పాస్‌వర్డ్‌తో భిన్నంగా ఉండాలి"
+    }
+  },
+
+  "settings": { "language": "భాష" },
+
+  "common": {
+    "loading": "లోడ్ అవుతోంది...",
+    "ok": "సరే",
+    "cancel": "రద్దు",
+    "clear": "తొలగించు",
+    "home": "హోమ్",
+    "wishlist": "విష్‌లిస్ట్",
+    "profile": "ప్రొఫైల్",
+    "cart": "కార్ట్",
+    "clearSearch": "శోధన తొలగించు",
+    "clearSearchHint": "ప్రస్తుత శోధన పాఠ్యాన్ని తొలగిస్తుంది",
+    "edit": "సవరించు",
+    "delete": "తొలగించు",
+    "error": { "generic": "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి." },
+    "inTransit": "రవాణాలో ఉంది"
+  },
+
+  "cart": {
+    "stockLimitTitle": "స్టాక్ పరిమితి",
+    "onlyNAvailable": "కేవలం {{count}} అంశాలు అందుబాటులో ఉన్నాయి.",
+    "quantityUpdated": { "title": "పరిమాణం నవీకరించబడింది" },
+    "removed": { "title": "కార్ట్ నుండి తొలగించబడింది" },
+    "total": "మొత్తం",
+    "empty": {
+      "title": "కార్ట్ ఖాళీగా ఉంది",
+      "subtitle": "ఆర్డర్ చేయడానికి ముందు అంశాలను జోడించండి"
+    }
+  }
+}

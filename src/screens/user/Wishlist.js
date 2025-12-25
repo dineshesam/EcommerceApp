@@ -10,8 +10,13 @@ import { addCart } from "../../redux/slices/cartSlice";
 import makeImageUrl from "../../utils/makeImageUrl";
 import { useNavigation } from "@react-navigation/native";
 import { addToCartServer } from "../../api/cartApi";
+import Images from "../../assets/images";
 
 import useDynamicStyles from "../../hooks/useDynamicStyles";
+
+// ✅ Toast helpers
+import { toastSuccess, toastError, toastInfo } from "../../utils/toast";
+import { useTranslation } from "react-i18next";
 
 export default function Wishlist() {
   const dispatch = useDispatch();
@@ -23,55 +28,83 @@ export default function Wishlist() {
 
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
+  const { t } = useTranslation();
 
   // Fast lookup of cart product IDs
   const cartIds = useMemo(() => new Set(cart.map((c) => c.productId)), [cart]);
 
   // ID -> product map for live stock lookup (optional, for disabling by stock)
   const productsById = useMemo(() => {
-    const map = {};
+    const map: Record<string | number, any> = {};
     for (const p of products) map[p.id] = p;
     return map;
   }, [products]);
 
-  const handleRemove = async (product) => {
+  // Small helper to extract readable error text
+  const getErrMsg = (e: any) =>
+    e?.response?.data?.message ||
+    e?.message ||
+    t("common.error.generic");
+
+  const handleRemove = async (product: any) => {
     try {
+      // Optimistic: remove locally first
       dispatch(removeWishlist(product.id));
       await removeFromWishlistServer(product.id);
+
+      // ✅ Toast feedback
+      toastSuccess(t("wishlist.removed.title"), product.name);
     } catch (e) {
       console.log("remove wishlist failed:", e);
+      toastError(t("wishlist.removeFailed.title"), getErrMsg(e));
     }
   };
 
-  const handleMoveToCart = async (product) => {
+  const handleMoveToCart = async (product: any) => {
     try {
-      // If already in cart, do nothing (you may navigate to Cart if you prefer)
-      if (cartIds.has(product.id)) return;
+      // If already in cart, just inform (or navigate)
+      if (cartIds.has(product.id)) {
+        toastInfo(t("wishlist.alreadyInCart.title"), product.name);
+        // Optional: navigation.navigate("Cart");
+        return;
+      }
 
+      // Optimistic: add to cart locally
       dispatch(addCart({ productId: product.id, qty: 1, product }));
+
+      // Server add
       await addToCartServer(product.id);
 
-      // Remove from wishlist after adding to cart
+      // Remove from wishlist (server + local)
       await removeFromWishlistServer(product.id);
       dispatch(removeWishlist(product.id));
+
+      // ✅ Toast success
+      toastSuccess(t("wishlist.addedToCart.title"), product.name);
     } catch (e) {
       console.log("move to cart failed:", e);
+      // Optional rollback if you want strict consistency:
+      // dispatch(removeFromCart({ productId: product.id }));
+      toastError(t("wishlist.moveToCartFailed.title"), getErrMsg(e));
     }
   };
 
   const renderItem = useCallback(
-    ({ item }) => {
+    ({ item }: { item: any }) => {
       const liveStock =
         productsById[item.id]?.stock ??
         (typeof item.stock === "number" ? item.stock : 0);
 
       const inCart = cartIds.has(item.id);
-      const disabled = inCart || liveStock <= 0;
+
+      // 🔧 UX tweak: only disable when out of stock (still allow tap when inCart to show info toast)
+      const disabled = liveStock <= 0;
+
       const buttonLabel = inCart
-        ? "In Cart"
-        : liveStock <= 0
-        ? "Out of Stock"
-        : "Add to Cart";
+        ? t("shop.inCart")
+        : disabled
+        ? t("shop.outOfStock")
+        : t("shop.addToCart");
 
       return (
         <TouchableOpacity
@@ -100,7 +133,8 @@ export default function Wishlist() {
                 disabled={disabled}
                 onPress={() => {
                   if (inCart) {
-                    // Optional: navigate to Cart when already in cart
+                    // Inform and optionally navigate
+                    toastInfo(t("wishlist.alreadyInCart.title"), item.name);
                     // navigation.navigate("Cart");
                     return;
                   }
@@ -123,21 +157,28 @@ export default function Wishlist() {
                 onPress={() => handleRemove(item)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.removeTxt}>🗑 Remove</Text>
+                <Text style={styles.removeTxt}>🗑 {t("shop.remove")}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>
       );
     },
-    [navigation, productsById, cartIds, colors] // include colors for disabled text style
+    [navigation, productsById, cartIds, colors, t]
   );
 
   return (
     <View style={styles.container}>
       {wishlist.length === 0 ? (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>No items in wishlist 😕</Text>
+          {/* <View style={styles.iconWrapper}>
+            <Images.icons.Email/>
+            <Images.icons.Fx/>
+            <Images.icons.Managegroup/>
+            <Images.icons.Home/>
+            <Images.icons.Gear/>
+          </View> */}
+          <Text style={styles.emptyText}>{t("wishlist.empty")}</Text>
         </View>
       ) : (
         <FlatList
@@ -152,9 +193,13 @@ export default function Wishlist() {
   );
 }
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBg },
+    iconWrapper: {
+      width: 26.25,
+      height: 21,
+    },
 
     emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
     emptyText: { fontSize: 18, fontWeight: "600", color: colors.secondaryText },
