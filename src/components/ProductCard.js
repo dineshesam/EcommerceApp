@@ -1,7 +1,7 @@
 
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { addWishlist, removeWishlist } from "../redux/slices/wishlistSlice";
 import { addToWishlistServer, removeFromWishlistServer } from "../api/wishlistApi";
 import makeImageUrl from "../utils/makeImageUrl";
@@ -10,35 +10,51 @@ import { addCart } from "../redux/slices/cartSlice";
 import useDynamicStyles from "../hooks/useDynamicStyles";
 import { useNavigation } from "@react-navigation/native";
 import Images from "../assets/images";
-
-// ✅ Toast helpers (compact bottom pill)
 import { toastSuccess, toastError, toastInfo } from "../utils/toast";
 import { useTranslation } from "react-i18next";
 
-export default function ProductCard({ product }) {
+// Hoist small constants so they aren't allocated per render
+const HIT_SLOP = { top: 6, bottom: 6, left: 6, right: 6 };
+
+// Pure visual SVGs (optional null guards)
+const HeartIcon = Images?.icons?.Heart;
+const RedHeartIcon = Images?.icons?.Redheart;
+
+function ProductCard({ product }) {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const wishlist = useSelector((state) => state.wishlist);
-  const cart = useSelector((state) => state.cart);
-  const cartIds = useMemo(() => new Set(cart.map((c) => c.productId)), [cart]);
-
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
   const { t } = useTranslation();
 
-  const inWishlist = wishlist.some((item) => item.id === product.id);
+  // ✅ Select only what you need so changes in other parts of the slice
+  // don't cause a re-render for this card.
+  const inWishlist = useSelector(
+    (state) => state.wishlist.some((item) => item.id === product.id),
+    shallowEqual
+  );
+  const inCart = useSelector(
+    (state) => state.cart.some((c) => c.productId === product.id),
+    shallowEqual
+  );
 
-  // SAFELY BUILD IMAGE URI & FALLBACK
+  // Image building with safe fallback
   const firstImage = Array.isArray(product?.images) ? product.images[0] : undefined;
   const imageUri = makeImageUrl(firstImage);
   const hasImage = typeof imageUri === "string" && imageUri.length > 0;
 
-  const getErrMsg = (e) =>
-    e?.response?.data?.message || e?.message || t("common.error.generic");
+  const isOut = product.stock <= 0;
+  const disabled = isOut;
+  const label = inCart ? t("shop.inCart") : isOut ? t("shop.outOfStock") : t("shop.addToCart");
 
-  const handleAddCart = async () => {
+  const getErrMsg = useCallback(
+    (e) => e?.response?.data?.message || e?.message || t("common.error.generic"),
+    [t]
+  );
+
+  const handleAddCart = useCallback(async () => {
     try {
-      if (cartIds.has(product.id)) {
+      if (inCart) {
         toastInfo(t("wishlist.alreadyInCart.title"), product.name);
         return;
       }
@@ -46,20 +62,21 @@ export default function ProductCard({ product }) {
         toastError(t("shop.outOfStock"), product.name);
         return;
       }
-
-      // Optimistic add to cart locally
+      // Optimistic add locally
       dispatch(addCart({ productId: product.id, qty: 1, product }));
       // Server sync
       await addToCartServer(product.id);
-
       toastSuccess(t("wishlist.addedToCart.title"), product.name);
     } catch (e) {
       console.log("move to cart failed:", e);
-      toastError(t("cart.addFailed.title", { defaultValue: "Add to cart failed" }), getErrMsg(e));
+      toastError(
+        t("cart.addFailed.title", { defaultValue: "Add to cart failed" }),
+        getErrMsg(e)
+      );
     }
-  };
+  }, [dispatch, inCart, product, t, getErrMsg]);
 
-  const handleWishlist = async () => {
+  const handleWishlist = useCallback(async () => {
     try {
       if (inWishlist) {
         dispatch(removeWishlist(product.id));
@@ -68,32 +85,23 @@ export default function ProductCard({ product }) {
       } else {
         dispatch(addWishlist(product));
         await addToWishlistServer(product.id);
-        // Uses a safe default because `wishlist.added.title` isn't in your JSON
-        toastSuccess(t("wishlist.added.title", { defaultValue: "Added to wishlist" }), product.name);
+        toastSuccess(
+          t("wishlist.added.title", { defaultValue: "Added to wishlist" }),
+          product.name
+        );
       }
     } catch (err) {
       console.log("Wishlist Sync Error:", err);
       toastError(t("wishlist.removeFailed.title"), getErrMsg(err));
     }
-  };
+  }, [dispatch, inWishlist, product, t, getErrMsg]);
 
-  const isOut = product.stock <= 0;
-  const inCart = cartIds.has(product.id);
-
-  // Prefer disabling ONLY when out of stock, so we can show "Already in cart" toast.
-  const disabled = isOut;
-  const label = inCart ? t("shop.inCart") : isOut ? t("shop.outOfStock") : t("shop.addToCart");
-
-  // 🔴 Use your actual SVGs here
-  const Heart = Images?.icons?.Heart;       // outline heart (stroke)
-  const RedHeart = Images?.icons?.Redheart; // filled heart (fill)
+  const onNavigate = useCallback(() => {
+    navigation.navigate("ProductDetails", { product });
+  }, [navigation, product]);
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.85}
-      onPress={() => navigation.navigate("ProductDetails", { product })}
-    >
+    <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={onNavigate}>
       {/* PRODUCT IMAGE */}
       {hasImage ? (
         <Image source={{ uri: imageUri }} style={styles.image} />
@@ -103,23 +111,21 @@ export default function ProductCard({ product }) {
         </View>
       )}
 
-      {/* WISHLIST BUTTON — render SVG directly (no Text wrapper) */}
+      {/* WISHLIST BUTTON */}
       <TouchableOpacity
         style={styles.wishBtn}
         onPress={handleWishlist}
         activeOpacity={0.85}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
         accessibilityState={{ selected: inWishlist }}
       >
-        {inWishlist ? (
-          // Filled heart (uses fill)
-          <RedHeart width={22} height={22} />
-        ) : (
-          // Outline heart (uses stroke)
-          <Heart width={22} height={22} fill="none" stroke={colors.primaryText} strokeWidth={1.8} />
-        )}
+        {inWishlist && RedHeartIcon ? (
+          <RedHeartIcon width={22} height={22} />
+        ) : HeartIcon ? (
+          <HeartIcon width={22} height={22} fill="none" stroke={colors.primaryText} strokeWidth={1.8} />
+        ) : null}
       </TouchableOpacity>
 
       {/* PRODUCT INFO */}
@@ -156,11 +162,27 @@ export default function ProductCard({ product }) {
   );
 }
 
+/**
+ * Memoize the card so it only re-renders when its product changes
+ * or its inCart/inWishlist flags change.
+ */
+export default React.memo(ProductCard, (prevProps, nextProps) => {
+  const p = prevProps.product;
+  const n = nextProps.product;
+  // Re-render if product identity or key fields change
+  if (p?.id !== n?.id) return false;
+  if (p?.price !== n?.price) return false;
+  if (p?.stock !== n?.stock) return false;
+  if (p?.name !== n?.name) return false;
+  // If you pass extra props later, compare them here too.
+  return true;
+});
+
 /* ==================== STYLES ==================== */
 const createStyles = (colors) =>
   StyleSheet.create({
     card: {
-      flex: 1, // allows 2 cards per row
+      flex: 1,               // allows 2 cards per row
       backgroundColor: colors.card,
       borderRadius: 12,
       margin: 6,
@@ -170,14 +192,11 @@ const createStyles = (colors) =>
       overflow: "hidden",
       padding: 10,
     },
-
     image: {
       width: "100%",
-      height: 140, // slightly reduced
+      height: 140,
       resizeMode: "contain",
     },
-
-    // Fallback when uri missing
     imagePlaceholder: {
       width: "100%",
       height: 150,
@@ -189,29 +208,23 @@ const createStyles = (colors) =>
       color: colors.secondaryText,
       fontSize: 12,
     },
-
-    // Container for the wishlist icon
     wishBtn: {
       position: "absolute",
       right: 10,
       top: 10,
-      width: 36,                 // fixed square container
+      width: 36,
       height: 36,
       borderRadius: 18,
       backgroundColor: colors.inputBg,
       alignItems: "center",
       justifyContent: "center",
       elevation: 5,
-      // Optional: subtle border for better contrast
       borderWidth: 1,
       borderColor: colors.inputBorder,
     },
-
     infoBox: { padding: 10 },
-
     title: { fontSize: 15, fontWeight: "600", color: colors.primaryText },
     price: { fontSize: 16, fontWeight: "700", color: colors.priceText, marginVertical: 5 },
-
     cartBtn: {
       backgroundColor: colors.ctaButtonBg,
       paddingVertical: 7,
