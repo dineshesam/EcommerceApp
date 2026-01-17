@@ -3,12 +3,48 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import useDynamicStyles from "../../hooks/useDynamicStyles";
 import { useTranslation } from "react-i18next";
+import { BackHandler, Platform } from "react-native";
+import { useEffect, useState } from "react";
+
 
 export default function OrderSuccess({ route, navigation }) {
   const { order } = route.params || {};
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
   const { t } = useTranslation();
+
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+     const onBackPress = () => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "CartMain" }],
+      });
+      return true; // ⛔ block default back behavior
+    };
+
+    const sub = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+
+    return () => sub.remove();
+  }, []);
+
+
+
+
+  const goToOrders = () => {
+  navigation.navigate("Orders");
+};
+const goToHome = () => {
+  navigation.getParent()?.reset({
+    index: 0,
+    routes: [{ name: "Home" }],
+  });
+};
 
   return (
     <View style={styles.box}>
@@ -29,7 +65,7 @@ export default function OrderSuccess({ route, navigation }) {
 
       {/* View Orders */}
       <TouchableOpacity
-        onPress={() => navigation.navigate("Orders")}
+        onPress={goToOrders}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel={t("order.viewMyOrders")}
@@ -39,7 +75,7 @@ export default function OrderSuccess({ route, navigation }) {
 
       {/* Back to Home */}
       <TouchableOpacity
-        onPress={() => navigation.navigate("Home")}
+        onPress={goToHome}
         style={styles.homeBtn}
         activeOpacity={0.85}
         accessibilityRole="button"

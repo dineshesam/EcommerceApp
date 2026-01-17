@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../redux/slices/productSlice";
@@ -16,31 +17,46 @@ import useDynamicStyles from "../../hooks/useDynamicStyles";
 import SearchBar from "../../components/SearchBar";
 import { useTranslation } from "react-i18next";
 
+/** Unbiased Fisher–Yates shuffle on a copy (call with slice()) */
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function Home({ navigation }) {
   const dispatch = useDispatch();
   const { items, total = 0, loading } = useSelector((state) => state.products);
   const { t } = useTranslation();
 
-  // local UI/filter state (server will use these)
+  // 🔎 local UI/filter state
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // 👉 Multi-select categories; "all" means no filter
+  const [selectedCategories, setSelectedCategories] = useState(["all"]);
   const [sortBy, setSortBy] = useState("relevance");
 
-  // UI toggles (Flipkart-like collapsible bars)
+  // UI toggles
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
+
+  // Pull-to-refresh
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 🔁 Recommended re-randomization control
+  const [recommendNonce, setRecommendNonce] = useState(0);
 
   // theme
   const { colors } = useDynamicStyles();
   const styles = createStyles(colors);
   const NUM_COLUMNS = 2;
 
-  // keep track of the current page locally
+  // pagination references
   const currentPageRef = useRef(1);
-  // simple debounce for typing
   const debounceRef = useRef(null);
 
-  // ⏱️ Initial load → page 1, limit 16
+  // ⏱️ Initial load
   useEffect(() => {
     currentPageRef.current = 1;
     dispatch(
@@ -55,13 +71,13 @@ export default function Home({ navigation }) {
     );
   }, [dispatch]);
 
-  /* 🧩 CATEGORIES (derived from loaded items; can swap to server facets later) */
+  /* 🧩 Derive categories from loaded items */
   const categories = useMemo(() => {
     const cats = items.map((p) => p.category).filter(Boolean);
     return ["all", ...new Set(cats)];
   }, [items]);
 
-  /* 🔽 SORT OPTIONS (localized labels) */
+  /* 🔽 Sort options */
   const sortOptions = [
     { key: "relevance", label: t("shop.sort.relevance") },
     { key: "price_low", label: t("shop.sort.priceLow") },
@@ -70,10 +86,14 @@ export default function Home({ navigation }) {
     { key: "name", label: t("shop.sort.nameAZ") },
   ];
 
-  /* ⭐ RECOMMENDED (you can keep this UX: show when not searching) */
-  const recommendedItems = useMemo(() => items.slice(0, 6), [items]);
+  // 👉 Helper: compute server param for categories (comma-separated)
+  const effectiveCategoriesParam = useMemo(() => {
+    if (selectedCategories.includes("all")) return "all";
+    // If no selection somehow, default to "all"
+    return selectedCategories.length ? selectedCategories.join(",") : "all";
+  }, [selectedCategories]);
 
-  // 🔎 Debounced search → reset page to 1 and replace items
+  // 🔎 Debounced fetch on changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -83,32 +103,40 @@ export default function Home({ navigation }) {
           page: 1,
           limit: 16,
           q: search,
-          category: selectedCategory,
+          category: effectiveCategoriesParam, // 👈 use multi-select
           sort: sortBy,
           append: false,
         })
       );
     }, 300);
     return () => clearTimeout(debounceRef.current);
-    // re-run when any filter changes
-  }, [search, selectedCategory, sortBy, dispatch]);
+  }, [search, selectedCategories, effectiveCategoriesParam, sortBy, dispatch]);
 
-  // 🧪 Category change (from chips)
-  const onSelectCategory = (next) => {
-    setSelectedCategory(next);
-    // debounce effect above will refetch page 1
+  // 🧪 Multi-select category toggle
+  const onToggleCategory = (cat) => {
+    setSelectedCategories((prev) => {
+      if (cat === "all") return ["all"]; // Tap "all" -> exclusively select "all"
+      const next = prev.filter((c) => c !== "all"); // Remove "all" if present
+      if (next.includes(cat)) {
+        const removed = next.filter((c) => c !== cat); // Toggle off
+        return removed.length === 0 ? ["all"] : removed;
+      } else {
+        return [...next, cat]; // Toggle on
+      }
+    });
   };
 
-  // 🔁 Sort change (from chips)
-  const onSelectSort = (nextSort) => {
-    setSortBy(nextSort);
-    // debounce effect above will refetch page 1
-  };
+  // 🔁 Sort change (single-select)
+  const onSelectSort = (nextSort) => setSortBy(nextSort);
 
-  // 🚚 Infinite scroll: fetch next page when near bottom
-  const hasMore = items.length < Number(total || 0); // guard
+  // ✨ Clear actions
+  const clearFilters = () => setSelectedCategories(["all"]);
+  const clearSort = () => setSortBy("relevance");
+
+  // 🚚 Infinite scroll
+  const hasMore = items.length < Number(total || 0);
   const loadMore = () => {
-    if (loading || !hasMore) return;
+    if (loading || isRefreshing || !hasMore) return;
     const nextPage = currentPageRef.current + 1;
     currentPageRef.current = nextPage;
     dispatch(
@@ -116,15 +144,53 @@ export default function Home({ navigation }) {
         page: nextPage,
         limit: 16,
         q: search,
-        category: selectedCategory,
+        category: effectiveCategoriesParam, // 👈 multi-select param
         sort: sortBy,
-        append: true, // append subsequent pages
+        append: true,
       })
     );
   };
 
+  // 🔄 Pull-to-refresh
+  const onRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      currentPageRef.current = 1;
+      await dispatch(
+        fetchProducts({
+          page: 1,
+          limit: 16,
+          q: search,
+          category: effectiveCategoriesParam, // 👈 multi-select param
+          sort: sortBy,
+          append: false,
+        })
+      );
+      // ✅ reshuffle Recommended after refresh completes
+      setRecommendNonce((n) => n + 1);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  /* ⭐ RECOMMENDED — shuffled every time nonce changes (or items change) */
+  const recommendedItems = useMemo(() => {
+    const copy = items.slice(); // work on a copy to avoid mutating Redux array
+    shuffleInPlace(copy);
+    return copy.slice(0, 6);
+  }, [items, recommendNonce]);
+
+  // ✅ When search becomes empty (Recommended visible), re-randomize
+  useEffect(() => {
+    if (!search) setRecommendNonce((n) => n + 1);
+  }, [search, selectedCategories, sortBy]);
+
   // initial skeleton
-  if (loading && items.length === 0) {
+  if (loading && items.length === 0 && !isRefreshing) {
     return (
       <View style={[styles.center, { backgroundColor: colors.primaryBg }]}>
         <ActivityIndicator size="large" color={colors.brandAccent} />
@@ -135,7 +201,7 @@ export default function Home({ navigation }) {
   return (
     <FlatList
       key={`grid-${NUM_COLUMNS}`}
-      data={items} // ✅ render server-returned items directly
+      data={items}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <View style={styles.gridItem}>
@@ -146,6 +212,15 @@ export default function Home({ navigation }) {
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[colors.brandAccent]}
+          tintColor={colors.brandAccent}
+          progressBackgroundColor={colors.inputBg}
+        />
+      }
       ListHeaderComponent={
         <>
           {/* 🔎 SEARCH */}
@@ -155,23 +230,22 @@ export default function Home({ navigation }) {
             onClear={() => setSearch("")}
             placeholder={t("shop.searchProducts")}
             onSubmitEditing={() => {
-              // immediate fetch on Enter
               currentPageRef.current = 1;
               dispatch(
                 fetchProducts({
                   page: 1,
                   limit: 16,
                   q: search,
-                  category: selectedCategory,
+                  category: effectiveCategoriesParam, // 👈 multi-select param
                   sort: sortBy,
                   append: false,
                 })
               );
             }}
-            isLoading={loading} // optional spinner in the bar if you implemented it
+            isLoading={loading}
           />
 
-          {/* 🔘 Top Control Bar (Flipkart-like) */}
+          {/* 🔘 Top Control Bar */}
           <View style={styles.controlBar}>
             <TouchableOpacity
               style={styles.controlBtn}
@@ -202,7 +276,7 @@ export default function Home({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* 🧩 FILTER (Category chips) — collapsible */}
+          {/* 🧩 FILTERS (Multi-select chips) — collapsible */}
           {showFilters && (
             <FlatList
               data={categories}
@@ -212,29 +286,29 @@ export default function Home({ navigation }) {
               style={{ marginBottom: 10 }}
               contentContainerStyle={{ paddingVertical: 2 }}
               renderItem={({ item }) => {
-                const active = item === selectedCategory;
+                const isActive =
+                  item === "all"
+                    ? selectedCategories.includes("all")
+                    : selectedCategories.includes(item);
                 const label = item === "all" ? t("shop.all") : item.toUpperCase();
                 return (
                   <Text
-                    onPress={() => onSelectCategory(item)}
-                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => onToggleCategory(item)}
+                    style={[styles.chip, isActive && styles.chipActive]}
                   >
                     {label}
                   </Text>
                 );
               }}
               ListFooterComponent={
-                <Text
-                  onPress={() => onSelectCategory("all")}
-                  style={[styles.chip, styles.clearChip]}
-                >
+                <Text onPress={clearFilters} style={[styles.chip, styles.clearChip]}>
                   {t("common.clear")}
                 </Text>
               }
             />
           )}
 
-          {/* 🔽 SORT — collapsible */}
+          {/* 🔽 SORT — single-select + Clear */}
           {showSort && (
             <FlatList
               data={sortOptions}
@@ -254,6 +328,11 @@ export default function Home({ navigation }) {
                   </Text>
                 );
               }}
+              ListFooterComponent={
+                <Text onPress={clearSort} style={[styles.sortChip, styles.clearChip]}>
+                  {t("common.clear")}
+                </Text>
+              }
             />
           )}
 
@@ -267,9 +346,26 @@ export default function Home({ navigation }) {
           {/* ⭐ RECOMMENDED (only when not searching) */}
           {!search && (
             <>
-              <Text style={styles.sectionTitle}>
-                {t("shop.recommendedForYou")}
-              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={styles.sectionTitle}>
+                  {t("shop.recommendedForYou")}
+                </Text>
+                {/* <TouchableOpacity
+                  onPress={() => setRecommendNonce((n) => n + 1)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ color: colors.brandAccent, fontWeight: "700" }}>
+                    {t("common.refresh")}
+                  </Text>
+                </TouchableOpacity> */}
+              </View>
+
               <FlatList
                 data={recommendedItems}
                 horizontal
@@ -292,8 +388,6 @@ export default function Home({ navigation }) {
       ListEmptyComponent={
         <Text style={styles.empty}>{t("shop.noProductsFound")}</Text>
       }
-
-      // 🚚 Infinite scroll hooks
       onEndReached={loadMore}
       onEndReachedThreshold={0.4}
       ListFooterComponent={
@@ -364,10 +458,10 @@ const createStyles = (colors) =>
       color: colors.primaryText,
     },
     recommendedItem: {
-      width: 200,
-      height: 200,
-      marginRight: 10,
-      paddingLeft: 2,
+      width: 195,
+      height: 220,
+      marginRight: 8,
+      paddingLeft: 1,
     },
     /** Category chips mapped to tab background & brand accent */
     chip: {

@@ -26,7 +26,7 @@ export default function Wishlist() {
   const wishlist = useSelector((state) => state.wishlist);       // [{ id, name, ... }, ...]
   const products = useSelector((state) => state.products.items); // [{ id, stock, ... }, ...]
 
-  const { colors } = useDynamicStyles();
+  const { colors, img } = useDynamicStyles();
   const styles = createStyles(colors);
   const { t } = useTranslation();
 

@@ -196,6 +196,12 @@
     "clearSearchHint": "Clears the current search text",
     "inTransit": "in Transit",
     
+"startShopping": "Start shopping",
+    "browseProductsAndAdd": "Browse products and add items to your cart",
+    "yourCartIsEmpty": "Your cart is empty",
+    "refresh": "Refresh",
+
+    
   "edit": "Edit",
     "delete": "Delete",
 
@@ -207,6 +213,9 @@
   "cart": {
     "stockLimitTitle": "Stock limit",
     "onlyNAvailable": "Only {{count}} item(s) available.",
+  
+    "removeOOSToProceed": "Some items are out of stock. Remove them to proceed.",
+
     "quantityUpdated": {
       "title": "Quantity updated"
     },

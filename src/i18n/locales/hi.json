@@ -175,12 +175,19 @@
     "edit": "संपादित करें",
     "delete": "हटाएं",
     "error": { "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।" },
-    "inTransit": "रास्ते में"
+    "inTransit": "रास्ते में",
+    "refresh": "रीफ़्रेश करें",
+    
+"startShopping": "खरीदारी शुरू करें",
+    "browseProductsAndAdd": "उत्पाद ब्राउज़ करें और उन्हें अपनी कार्ट में जोड़ें",
+    "yourCartIsEmpty": "आपकी कार्ट खाली है"
+
   },
 
   "cart": {
     "stockLimitTitle": "स्टॉक सीमा",
     "onlyNAvailable": "केवल {{count}} आइटम उपलब्ध हैं।",
+    "removeOOSToProceed": "कुछ आइटम स्टॉक में नहीं हैं। आगे बढ़ने के लिए उन्हें हटाएं।",
     "quantityUpdated": { "title": "मात्रा अपडेट की गई" },
     "removed": { "title": "कार्ट से हटाया गया" },
     "total": "कुल",

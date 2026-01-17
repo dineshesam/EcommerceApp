@@ -28,6 +28,17 @@ export default function Cart({ navigation }) {
     return cart.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.qty, 0);
   }, [cart]);
 
+  // ✅ Determine if any cart item is out of stock (using live stock when available)
+  const hasOutOfStock = useMemo(() => {
+    for (const item of cart) {
+      const liveStockRaw = productsById[String(item.productId)]?.stock;
+      const fallback = typeof item.product?.stock === "number" ? item.product.stock : 0;
+      const liveStock = typeof liveStockRaw === "number" ? liveStockRaw : fallback;
+      if (liveStock <= 0) return true;
+    }
+    return false;
+  }, [cart, productsById]);
+
   const increase = useCallback(
     (item) => {
       const liveStockRaw = productsById[String(item.productId)]?.stock;
@@ -89,10 +100,11 @@ export default function Cart({ navigation }) {
     const fallback = typeof item.product?.stock === "number" ? item.product.stock : 0;
     const liveStock = typeof liveStockRaw === "number" ? liveStockRaw : fallback;
 
-    const atMax = item.qty >= liveStock || liveStock <= 0;
+    const isOOS = liveStock <= 0;
+    const atMax = item.qty >= liveStock || isOOS;
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isOOS && styles.cardOOS]}>
         <Image
           source={{ uri: makeImageUrl(item.product?.images?.[0]) }}
           style={styles.img}
@@ -103,9 +115,7 @@ export default function Cart({ navigation }) {
           <Text style={styles.price}>₹ {item.product?.price}</Text>
 
           <Text style={styles.stockText}>
-            {liveStock <= 0
-              ? t("shop.outOfStock")
-              : t("shop.inStockCount", { count: liveStock })}
+            {isOOS ? t("shop.outOfStock") : t("shop.inStockCount", { count: liveStock })}
           </Text>
 
           <View style={styles.row}>
@@ -137,12 +147,38 @@ export default function Cart({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.header}>🛒 {t("common.cart")} ({cart.length})</Text>
 
-      <FlatList
-        data={cart}
-        renderItem={renderItem}
-        keyExtractor={(i) => String(i.productId)}
-        showsVerticalScrollIndicator={false}
-      />
+      {hasOutOfStock && (
+        <View style={styles.oosBanner}>
+          <Text style={styles.oosBannerText}>
+            {t("cart.removeOOSToProceed", "Some items are out of stock. Remove them to proceed.")}
+          </Text>
+        </View>
+      )}
+
+      
+{cart.length === 0 ? (
+  <View style={styles.emptyWrapper}>
+    <Text style={styles.emptyTitle}> {t("common.yourCartIsEmpty")}</Text>
+    <Text style={styles.emptySubtitle}>
+       {t("common.browseProductsAndAdd")}
+    </Text>
+    <TouchableOpacity
+      style={styles.emptyCtaBtn}
+      onPress={() => navigation.navigate("Home")}
+      activeOpacity={0.85}
+    >
+      <Text style={styles.emptyCtaText}> {t("common.startShopping")}</Text>
+    </TouchableOpacity>
+  </View>
+) : (
+  <FlatList
+    data={cart}
+    renderItem={renderItem}
+    keyExtractor={(i) => String(i.productId)}
+    showsVerticalScrollIndicator={false}
+  />
+)}
+
 
       {cart.length > 0 && (
         <View style={styles.footer}>
@@ -150,8 +186,18 @@ export default function Cart({ navigation }) {
             {t("cart.total")}: ₹ {totalAmount.toLocaleString("en-IN")}
           </Text>
           <TouchableOpacity
-            style={styles.checkoutBtn}
-            onPress={() => navigation.navigate("Checkout")}
+            style={[styles.checkoutBtn, hasOutOfStock && styles.checkoutBtnDisabled]}
+            disabled={hasOutOfStock}
+            onPress={() => {
+              if (hasOutOfStock) {
+                Alert.alert(
+                  t("cart.stockLimitTitle", "Stock limit"),
+                  t("cart.removeOOSToProceed", "Some items are out of stock. Remove them to proceed.")
+                );
+                return;
+              }
+              navigation.navigate("Checkout");
+            }}
             activeOpacity={0.85}
           >
             <Text style={styles.checkoutText}>
@@ -175,6 +221,8 @@ function createStyles(colors) {
       borderBottomWidth: 1,
       borderColor: colors.divider
     },
+    // 👇 grey out OOS items
+    cardOOS: { opacity: 0.5 },
 
     img: { width: 70, height: 70, borderRadius: 10, marginRight: 10 },
 
@@ -199,6 +247,17 @@ function createStyles(colors) {
 
     delete: { fontSize: 24, color: colors.error, paddingHorizontal: 10 },
 
+    // Banner when OOS items exist
+    oosBanner: {
+      backgroundColor: colors.inputBg,
+      borderWidth: 1,
+      borderColor: colors.error,
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 10,
+    },
+    oosBannerText: { color: colors.error, fontWeight: "700" },
+
     footer: {
       marginTop: 15,
       borderTopWidth: 1,
@@ -219,11 +278,43 @@ function createStyles(colors) {
       borderRadius: 10,
       marginTop: 10
     },
+    checkoutBtnDisabled: { opacity: 0.5 },
     checkoutText: {
       color: colors.ctaButtonText,
       textAlign: "center",
       fontWeight: "700",
       fontSize: 15
-    }
+    },
+    
+emptyWrapper: {
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: 40,
+  paddingHorizontal: 16,
+},
+emptyTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  color: colors.primaryText,
+},
+emptySubtitle: {
+  marginTop: 6,
+  fontSize: 14,
+  color: colors.secondaryText,
+  textAlign: "center",
+},
+emptyCtaBtn: {
+  marginTop: 14,
+  backgroundColor: colors.ctaButtonBg,
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 8,
+},
+emptyCtaText: {
+  color: colors.ctaButtonText,
+  fontWeight: "700",
+},
+
+    
   });
 }

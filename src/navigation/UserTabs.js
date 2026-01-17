@@ -59,7 +59,10 @@ function CartStack() {
       <Stack.Screen name="PlaceOrder" component={PlaceOrder} />
       <Stack.Screen name="SelectAddress" component={SelectAddress} />
       <Stack.Screen name="AddAddress" component={AddAddress} />
-      <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
+      <Stack.Screen name="OrderSuccess" component={OrderSuccess} options={{
+    headerShown: false,
+    gestureEnabled: false, // iOS swipe back disabled
+  }} />
       <Stack.Screen name="Orders" component={Orders} />
     </Stack.Navigator>
   );

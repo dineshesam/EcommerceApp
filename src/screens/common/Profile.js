@@ -14,10 +14,14 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next"; // ⬅️ add this
 import useDynamicStyles from "../../hooks/useDynamicStyles";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
+import { useDispatch } from "react-redux";
+import { clearCart } from "../../redux/slices/cartSlice";
+import { resetWishlist } from "../../redux/slices/wishlistSlice";
 
 export default function Profile() {
   const navigation = useNavigation();
   const [user, setUser] = useState(null);
+  const dispatch = useDispatch();
 
   const { t, i18n } = useTranslation(); // ⬅️ add this
 
@@ -50,6 +54,11 @@ export default function Profile() {
           style: "destructive",
           onPress: async () => {
             try {
+
+              // ✅ Clear auth and user-scoped Redux state
+              dispatch(resetWishlist());
+              dispatch(clearCart());
+
               await AsyncStorage.removeItem("userToken");
               await AsyncStorage.removeItem("userData");
               navigation.replace("Login");
@@ -132,15 +141,15 @@ export default function Profile() {
       </TouchableOpacity>
 
       {/* Language buttons BELOW Logout */}
-      
-<LanguageSwitcher
-  colors={colors}
-  style={{ marginTop: 16 }}
-  showLabel={true}
-  compact={false}
-  persistSelection={true}
-  languages={["en", "hi", "te"]}
-/>
+
+      <LanguageSwitcher
+        colors={colors}
+        style={{ marginTop: 16 }}
+        showLabel={true}
+        compact={false}
+        persistSelection={true}
+        languages={["en", "hi", "te"]}
+      />
 
     </View>
   );
@@ -224,7 +233,7 @@ const createStyles = (colors) =>
     },
     logoutText: {
       color: colors.ctaButtonText,
-       fontFamily:'NotoSansTelugu_ExtraCondensed-Black',
+      fontFamily: 'NotoSansTelugu_ExtraCondensed-Black',
       textAlign: "center",
       fontSize: 17,
       fontWeight: "600"

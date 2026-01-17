@@ -35,6 +35,7 @@ const Images = {
      laptop_logo: require('./images/laptops_logo.png'),
      canon_logo: require('./images/canon.png'),
      hp_logo: require('./images/hp.png'),
+     all_logo: require('./images/all_text.png'),
     // icons: {
     //     AddressTest,
     //     Banana
